@@ -12,3 +12,7 @@ rayon = { version = "1.10", optional = true }
 [features]
 default = ["parallel"]
 parallel = ["rayon"]
+
+[profile.profiling]
+inherits = "release"
+debug = true

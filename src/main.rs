@@ -7,50 +7,51 @@ use std::time::{Duration, Instant};
 fn main() {
     let mut args = env::args().skip(1);
     let day_selection = parse_day(args.next());
-    let part_arg = args.next();
+    let part_or_mode = args.next();
     let show_timing = env::var("ADVENT_HIDE_TIMING").is_err();
-    let part = match day_selection {
+    let (part, run_mode) = match day_selection {
         DaySelection::All => {
-            if let Some(part) = part_arg {
-                eprintln!("Ignoring part argument '{}' when running all days.", part);
+            let mode = parse_run_mode(&part_or_mode);
+            if mode.is_none() {
+                if let Some(arg) = part_or_mode.as_ref() {
+                    eprintln!("Ignoring argument '{}' when running all days.", arg);
+                }
             }
-            Part::Both
+            (Part::Both, mode.unwrap_or(RunMode::Parallel))
         }
-        DaySelection::One(_) => parse_part(part_arg),
+        DaySelection::One(_) => (parse_part(part_or_mode), RunMode::Sequential),
     };
 
     if args.next().is_some() {
-        eprintln!("Unexpected extra arguments.\nUsage: advent-25 <day|all> [part] < input.txt");
+        eprintln!(
+            "Unexpected extra arguments.\nUsage: advent-25 <day|all> [part|mode] < input.txt"
+        );
         std::process::exit(1);
     }
 
     match day_selection {
         DaySelection::All => {
-            let mut outcomes = Vec::new();
-            for &day in &IMPLEMENTED_DAYS {
-                let input = match day {
-                    1 => advent_25::day01::INPUT,
-                    2 => advent_25::day02::INPUT,
-                    3 => advent_25::day03::INPUT,
-                    4 => advent_25::day04::INPUT,
-                    5 => advent_25::day05::INPUT,
-                    6 => advent_25::day06::INPUT,
-                    7 => advent_25::day07::INPUT,
-                    8 => advent_25::day08::INPUT,
-                    9 => advent_25::day09::INPUT,
-                    10 => advent_25::day10::INPUT,
-                    11 => advent_25::day11::INPUT,
-                    12 => advent_25::day12::INPUT,
-                    _ => unreachable!("IMPLEMENTED_DAYS contained unexpected day {}", day),
-                };
-                let outcome = run_day(day, Part::Both, input, show_timing);
-                print_outcome(&outcome, true);
-                outcomes.push(outcome);
+            let total_start = show_timing.then(Instant::now);
+            let outcomes = run_all_days(run_mode, show_timing);
+            for outcome in &outcomes {
+                print_outcome(outcome, true);
             }
 
             if show_timing {
-                let total_time: Duration = outcomes.iter().filter_map(|o| o.elapsed).sum();
-                eprintln!("Total execution time: {:.3?}", total_time);
+                let sum_time: Duration = outcomes.iter().filter_map(|o| o.elapsed).sum();
+                let wall_time = total_start.map(|start| start.elapsed());
+                if let Some(wall_time) = wall_time {
+                    let mode_label = match run_mode {
+                        RunMode::Parallel => "parallel",
+                        RunMode::Sequential => "sequential",
+                    };
+                    eprintln!(
+                        "Total execution time: {:.3?} (wall-clock, {}), {:.3?} (sum of day timings)",
+                        wall_time, mode_label, sum_time
+                    );
+                } else {
+                    eprintln!("Total execution time: {:.3?}", sum_time);
+                }
             }
 
             if let Err(err) = save_answers(&outcomes) {
@@ -107,6 +108,45 @@ fn run_day(day: u8, part: Part, input: &str, show_timing: bool) -> RunOutcome {
         day,
         answer,
         elapsed,
+    }
+}
+
+fn run_all_days(run_mode: RunMode, show_timing: bool) -> Vec<RunOutcome> {
+    if run_mode == RunMode::Sequential {
+        let mut outcomes = Vec::new();
+        for &day in &IMPLEMENTED_DAYS {
+            let input = embedded_input_for_day(day)
+                .unwrap_or_else(|| unreachable!("IMPLEMENTED_DAYS contained unexpected day {}", day));
+            outcomes.push(run_day(day, Part::Both, input, show_timing));
+        }
+        return outcomes;
+    }
+
+    #[cfg(feature = "parallel")]
+    {
+        use rayon::prelude::*;
+
+        let mut outcomes: Vec<RunOutcome> = IMPLEMENTED_DAYS
+            .par_iter()
+            .map(|&day| {
+                let input = embedded_input_for_day(day)
+                    .unwrap_or_else(|| unreachable!("IMPLEMENTED_DAYS contained unexpected day {}", day));
+                run_day(day, Part::Both, input, show_timing)
+            })
+            .collect();
+        outcomes.sort_by_key(|outcome| outcome.day);
+        outcomes
+    }
+
+    #[cfg(not(feature = "parallel"))]
+    {
+        let mut outcomes = Vec::new();
+        for &day in &IMPLEMENTED_DAYS {
+            let input = embedded_input_for_day(day)
+                .unwrap_or_else(|| unreachable!("IMPLEMENTED_DAYS contained unexpected day {}", day));
+            outcomes.push(run_day(day, Part::Both, input, show_timing));
+        }
+        outcomes
     }
 }
 
@@ -185,7 +225,7 @@ fn parse_day(raw: Option<String>) -> DaySelection {
     let value = match raw {
         Some(v) => v,
         None => {
-            eprintln!("Missing day.\nUsage: advent-25 <day|all> [part] < input.txt");
+            eprintln!("Missing day.\nUsage: advent-25 <day|all> [part|mode] < input.txt");
             std::process::exit(1);
         }
     };
@@ -210,26 +250,32 @@ fn parse_part(raw: Option<String>) -> Part {
 }
 
 fn input_for_day<'a>(day: u8, input_owned: &'a mut String) -> &'a str {
+    if let Some(input) = embedded_input_for_day(day) {
+        return input;
+    }
+
+    if let Err(err) = io::stdin().read_to_string(input_owned) {
+        eprintln!("Failed to read input: {}", err);
+        std::process::exit(1);
+    }
+    input_owned
+}
+
+fn embedded_input_for_day(day: u8) -> Option<&'static str> {
     match day {
-        1 => advent_25::day01::INPUT,
-        2 => advent_25::day02::INPUT,
-        3 => advent_25::day03::INPUT,
-        4 => advent_25::day04::INPUT,
-        5 => advent_25::day05::INPUT,
-        6 => advent_25::day06::INPUT,
-        7 => advent_25::day07::INPUT,
-        8 => advent_25::day08::INPUT,
-        9 => advent_25::day09::INPUT,
-        10 => advent_25::day10::INPUT,
-        11 => advent_25::day11::INPUT,
-        12 => advent_25::day12::INPUT,
-        _ => {
-            if let Err(err) = io::stdin().read_to_string(input_owned) {
-                eprintln!("Failed to read input: {}", err);
-                std::process::exit(1);
-            }
-            input_owned
-        }
+        1 => Some(advent_25::day01::INPUT),
+        2 => Some(advent_25::day02::INPUT),
+        3 => Some(advent_25::day03::INPUT),
+        4 => Some(advent_25::day04::INPUT),
+        5 => Some(advent_25::day05::INPUT),
+        6 => Some(advent_25::day06::INPUT),
+        7 => Some(advent_25::day07::INPUT),
+        8 => Some(advent_25::day08::INPUT),
+        9 => Some(advent_25::day09::INPUT),
+        10 => Some(advent_25::day10::INPUT),
+        11 => Some(advent_25::day11::INPUT),
+        12 => Some(advent_25::day12::INPUT),
+        _ => None,
     }
 }
 
@@ -270,6 +316,21 @@ fn save_answers(outcomes: &[RunOutcome]) -> std::io::Result<()> {
 enum DaySelection {
     One(u8),
     All,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+enum RunMode {
+    Parallel,
+    Sequential,
+}
+
+fn parse_run_mode(raw: &Option<String>) -> Option<RunMode> {
+    let value = raw.as_deref()?;
+    match value {
+        "parallel" | "par" => Some(RunMode::Parallel),
+        "sequential" | "seq" | "serial" => Some(RunMode::Sequential),
+        _ => None,
+    }
 }
 
 struct RunOutcome {
