@@ -13,12 +13,26 @@ struct Machine {
 
 pub fn part1(input: &str) -> Result<u64, String> {
     let machines = parse(input)?;
-    Ok(machines.iter().map(|m| solve_lights(m) as u64).sum())
+    #[cfg(feature = "parallel")]
+    {
+        Ok(machines.par_iter().map(|m| solve_lights(m) as u64).sum())
+    }
+    #[cfg(not(feature = "parallel"))]
+    {
+        Ok(machines.iter().map(|m| solve_lights(m) as u64).sum())
+    }
 }
 
 pub fn part2(input: &str) -> Result<u64, String> {
     let machines = parse(input)?;
-    Ok(machines.iter().map(|m| solve_joltage(m) as u64).sum())
+    #[cfg(feature = "parallel")]
+    {
+        Ok(machines.par_iter().map(|m| solve_joltage(m) as u64).sum())
+    }
+    #[cfg(not(feature = "parallel"))]
+    {
+        Ok(machines.iter().map(|m| solve_joltage(m) as u64).sum())
+    }
 }
 
 #[cfg(not(feature = "parallel"))]
@@ -58,11 +72,12 @@ fn solve_lights(m: &Machine) -> u32 {
 
     // Build matrix: mat[light] = bitmask of buttons that affect it.
     let mut mat = [0u16; 16];
-    for light in 0..m.n {
-        for (btn_idx, &btn) in m.buttons.iter().enumerate() {
-            if (btn >> light) & 1 == 1 {
-                mat[light] |= 1 << btn_idx;
-            }
+    for (btn_idx, &btn) in m.buttons.iter().enumerate() {
+        let mut bits = btn;
+        while bits != 0 {
+            let light = bits.trailing_zeros() as usize;
+            mat[light] |= 1 << btn_idx;
+            bits &= bits - 1;
         }
     }
 
@@ -106,25 +121,37 @@ fn solve_lights(m: &Machine) -> u32 {
     let num_free = num_buttons - rank;
     let free_mask = !pivot_mask & ((1u16 << num_buttons) - 1);
 
+    let mut free_cols = [0u8; 16];
+    let mut free_count = 0usize;
+    for col in 0..num_buttons {
+        if free_mask & (1 << col) != 0 {
+            free_cols[free_count] = col as u8;
+            free_count += 1;
+        }
+    }
+
+    let mut pivot_cols = [0u8; 16];
+    let mut other_masks = [0u16; 16];
+    for row in 0..rank {
+        let row_val = mat[row];
+        let pc = row_val.trailing_zeros() as usize;
+        pivot_cols[row] = pc as u8;
+        other_masks[row] = row_val & !(1 << pc);
+    }
+
     let mut best = u32::MAX;
     for free_bits in 0u16..(1 << num_free) {
         let mut solution = 0u16;
-        let mut fi = 0;
-        for col in 0..num_buttons {
-            if free_mask & (1 << col) != 0 {
-                if (free_bits >> fi) & 1 == 1 {
-                    solution |= 1 << col;
-                }
-                fi += 1;
+        for i in 0..num_free {
+            if (free_bits >> i) & 1 == 1 {
+                solution |= 1 << (free_cols[i] as usize);
             }
         }
 
         for row in (0..rank).rev() {
-            let row_val = mat[row];
-            let pivot_col = row_val.trailing_zeros() as usize;
+            let pivot_col = pivot_cols[row] as usize;
             let rhs = (target >> row) & 1;
-            let other_bits = row_val ^ (1 << pivot_col);
-            let xor_sum = (other_bits & solution).count_ones() & 1;
+            let xor_sum = (other_masks[row] & solution).count_ones() & 1;
             if (rhs as u32) ^ xor_sum == 1 {
                 solution |= 1 << pivot_col;
             }
@@ -154,23 +181,18 @@ fn solve_joltage(m: &Machine) -> u32 {
 
     // Compute upper bounds per button.
     let mut bounds = [u16::MAX; 16];
+    let mut mat = [[0i32; 17]; 16];
     for (col, &btn) in m.buttons.iter().enumerate() {
-        for row in 0..m.n {
-            if (btn >> row) & 1 == 1 {
-                bounds[col] = bounds[col].min(m.joltages[row]);
-            }
+        let mut bits = btn;
+        while bits != 0 {
+            let row = bits.trailing_zeros() as usize;
+            bounds[col] = bounds[col].min(unsafe { *m.joltages.get_unchecked(row) });
+            mat[row][col] = 1;
+            bits &= bits - 1;
         }
     }
-
-    // Build augmented matrix.
-    let mut mat = [[0i32; 17]; 16];
     for row in 0..m.n {
-        for (col, &btn) in m.buttons.iter().enumerate() {
-            if (btn >> row) & 1 == 1 {
-                mat[row][col] = 1;
-            }
-        }
-        mat[row][num_buttons] = m.joltages[row] as i32;
+        mat[row][num_buttons] = unsafe { *m.joltages.get_unchecked(row) } as i32;
     }
 
     // Gaussian elimination.
@@ -201,7 +223,14 @@ fn solve_joltage(m: &Machine) -> u32 {
             }
             let mut g = 0i32;
             for c in 0..=num_buttons {
-                g = gcd(g, mat[r][c].abs());
+                let v = mat[r][c].abs();
+                if v == 0 {
+                    continue;
+                }
+                g = gcd(g, v);
+                if g == 1 {
+                    break;
+                }
             }
             if g > 1 {
                 for c in 0..=num_buttons {
@@ -246,10 +275,16 @@ fn solve_joltage(m: &Machine) -> u32 {
         arr
     };
 
+    // Map column index -> free variable index (if free).
+    let mut col_to_free = [u8::MAX; 16];
+    for (idx, &col) in free_cols[..num_free].iter().enumerate() {
+        col_to_free[col] = idx as u8;
+    }
+
     // Precompute back-substitution coefficients for faster evaluation.
-    // Store sparse representation: (col, coeff) pairs for non-zero coefficients.
-    // Format: pivot_col, pivot_val, rhs, bound, num_terms, [(col, coeff); 16]
-    let mut backsub = [(0usize, 1i32, 0i32, 0i32, 0usize, [(0usize, 0i32); 16]); 16];
+    // Store sparse representation in terms of *free indices* (not columns).
+    // Format: pivot_val, rhs, bound, num_terms, [(free_idx, coeff); 16]
+    let mut backsub = [(1i32, 0i32, 0i32, 0u8, [(0u8, 0i32); 16]); 16];
     for r in 0..rank {
         let pc = pivot_col_for_row[r];
         let pivot_val = mat[r][pc];
@@ -258,76 +293,158 @@ fn solve_joltage(m: &Machine) -> u32 {
         let mut num_terms = 0;
         for c in 0..num_buttons {
             if c != pc && mat[r][c] != 0 {
-                terms[num_terms] = (c, mat[r][c]);
+                let free_idx = unsafe { *col_to_free.get_unchecked(c) };
+                if free_idx == u8::MAX {
+                    return u32::MAX;
+                }
+                terms[num_terms] = (free_idx as usize, mat[r][c]);
                 num_terms += 1;
             }
         }
-        backsub[r] = (pc, pivot_val, rhs, bounds[pc] as i32, num_terms, terms);
+        let mut packed = [(0u8, 0i32); 16];
+        for i in 0..num_terms {
+            packed[i] = (terms[i].0 as u8, terms[i].1);
+        }
+        backsub[r] = (
+            pivot_val,
+            rhs,
+            bounds[pc] as i32,
+            num_terms as u8,
+            packed,
+        );
     }
 
-    if num_free == 0 {
-        // No free variables - evaluate directly.
-        return eval_fast(&free_cols, num_free, &[0u32; 16], &backsub, rank)
-            .unwrap_or(u32::MAX);
-    }
-
-    // Iterative search with inline evaluation.
     let mut best = u32::MAX;
-    let mut free_vals = [0u32; 16];
-    let mut partial_costs = [0u32; 16];
 
-    // Compute max values for each free variable.
+    // Compute max values for each free variable (sorted by bound).
     let mut max_vals = [0u32; 16];
     for i in 0..num_free {
         max_vals[i] = free_bounds[i] as u32;
     }
 
-    let mut idx = 0usize;
-
-    loop {
-        if idx == num_free {
-            // Evaluate solution.
-            let cost = eval_fast(&free_cols, num_free, &free_vals, &backsub, rank);
-            if let Some(c) = cost {
-                if c < best {
-                    best = c;
+    let mut free_vals = [0i32; 16];
+    match num_free {
+        0 => {
+            if let Some(cost) = eval_fast(0, &free_vals, 0, &backsub, rank, best) {
+                best = cost;
+            }
+        }
+        1 => {
+            let max0 = max_vals[0] as i32;
+            for v0 in 0..=max0 {
+                if (v0 as u32) >= best {
+                    break;
+                }
+                free_vals[0] = v0;
+                if let Some(cost) = eval_fast(1, &free_vals, v0 as u32, &backsub, rank, best) {
+                    best = cost;
                 }
             }
-            // Backtrack.
-            if idx == 0 {
-                break;
-            }
-            idx -= 1;
-            free_vals[idx] += 1;
-            continue;
         }
-
-        let partial = if idx == 0 { 0 } else { partial_costs[idx - 1] };
-
-        // Prune if we can't improve.
-        if partial >= best {
-            if idx == 0 {
-                break;
+        2 => {
+            let max0 = max_vals[0] as i32;
+            let max1 = max_vals[1] as i32;
+            for v0 in 0..=max0 {
+                if (v0 as u32) >= best {
+                    break;
+                }
+                free_vals[0] = v0;
+                for v1 in 0..=max1 {
+                    let partial = (v0 + v1) as u32;
+                    if partial >= best {
+                        break;
+                    }
+                    free_vals[1] = v1;
+                    if let Some(cost) = eval_fast(2, &free_vals, partial, &backsub, rank, best) {
+                        best = cost;
+                    }
+                }
             }
-            idx -= 1;
-            free_vals[idx] += 1;
-            continue;
         }
+        3 => {
+            let max0 = max_vals[0] as i32;
+            let max1 = max_vals[1] as i32;
+            let max2 = max_vals[2] as i32;
+            for v0 in 0..=max0 {
+                if (v0 as u32) >= best {
+                    break;
+                }
+                free_vals[0] = v0;
+                for v1 in 0..=max1 {
+                    let partial01 = v0 + v1;
+                    if (partial01 as u32) >= best {
+                        break;
+                    }
+                    free_vals[1] = v1;
 
-        let max_allowed = max_vals[idx].min(best.saturating_sub(partial + 1));
-        if free_vals[idx] > max_allowed {
-            // Backtrack.
-            free_vals[idx] = 0;
-            if idx == 0 {
-                break;
+                    let remaining = best.saturating_sub(partial01 as u32 + 1);
+                    let max2_allowed = (remaining.min(max_vals[2]) as i32).min(max2);
+
+                    for v2 in 0..=max2_allowed {
+                        let partial = (partial01 + v2) as u32;
+                        free_vals[2] = v2;
+                        if let Some(cost) =
+                            eval_fast(3, &free_vals, partial, &backsub, rank, best)
+                        {
+                            best = cost;
+                        }
+                    }
+                }
             }
-            idx -= 1;
-            free_vals[idx] += 1;
-            continue;
         }
+        _ => {
+            // Fallback to a generic depth-first search.
+            let mut partial_costs = [0u32; 16];
+            let mut idx = 0usize;
+            loop {
+                if idx == num_free {
+                    let partial = partial_costs[idx - 1];
+                    if let Some(cost) =
+                        eval_fast(num_free, &free_vals, partial, &backsub, rank, best)
+                    {
+                        best = cost;
+                    }
+                    if idx == 0 {
+                        break;
+                    }
+                    idx -= 1;
+                    unsafe {
+                        *free_vals.get_unchecked_mut(idx) += 1;
+                    }
+                    continue;
+                }
 
-        partial_costs[idx] = partial + free_vals[idx];
-        idx += 1;
+                let partial = if idx == 0 { 0 } else { partial_costs[idx - 1] };
+                if partial >= best {
+                    if idx == 0 {
+                        break;
+                    }
+                    idx -= 1;
+                    unsafe {
+                        *free_vals.get_unchecked_mut(idx) += 1;
+                    }
+                    continue;
+                }
+
+                let max_allowed = max_vals[idx].min(best.saturating_sub(partial + 1)) as i32;
+                if unsafe { *free_vals.get_unchecked(idx) } > max_allowed {
+                    unsafe {
+                        *free_vals.get_unchecked_mut(idx) = 0;
+                    }
+                    if idx == 0 {
+                        break;
+                    }
+                    idx -= 1;
+                    unsafe {
+                        *free_vals.get_unchecked_mut(idx) += 1;
+                    }
+                    continue;
+                }
+
+                partial_costs[idx] = partial + unsafe { *free_vals.get_unchecked(idx) } as u32;
+                idx += 1;
+            }
+        }
     }
 
     best
@@ -335,58 +452,48 @@ fn solve_joltage(m: &Machine) -> u32 {
 
 #[inline(always)]
 fn eval_fast(
-    free_cols: &[usize; 16],
-    num_free: usize,
-    free_vals: &[u32; 16],
-    backsub: &[(usize, i32, i32, i32, usize, [(usize, i32); 16]); 16],
+    _num_free: usize,
+    free_vals: &[i32; 16],
+    total_free: u32,
+    backsub: &[(i32, i32, i32, u8, [(u8, i32); 16]); 16],
     rank: usize,
+    best: u32,
 ) -> Option<u32> {
-    let mut sol = [0i32; 16];
-    let mut total = 0u32;
+    let mut total = total_free;
 
-    for i in 0..num_free {
-        let v = free_vals[i] as i32;
-        sol[free_cols[i]] = v;
-        total += v as u32;
-    }
-
-    for r in (0..rank).rev() {
-        let (pc, pivot_val, rhs, bound, num_terms, ref terms) = backsub[r];
+    for r in 0..rank {
+        let (pivot_val, rhs, bound, num_terms, ref terms) = backsub[r];
         let mut sum = rhs;
-        for i in 0..num_terms {
-            let (c, coeff) = terms[i];
-            sum -= coeff * sol[c];
+        for i in 0..(num_terms as usize) {
+            let (fi, coeff) = unsafe { *terms.get_unchecked(i) };
+            sum -= coeff * unsafe { *free_vals.get_unchecked(fi as usize) };
         }
-        if pivot_val == 1 {
-            if sum < 0 || sum > bound {
-                return None;
-            }
-            sol[pc] = sum;
-            total += sum as u32;
+
+        let val = if pivot_val == 1 {
+            sum
         } else if pivot_val == -1 {
-            let val = -sum;
-            if val < 0 || val > bound {
-                return None;
-            }
-            sol[pc] = val;
-            total += val as u32;
+            -sum
         } else {
             if sum % pivot_val != 0 {
                 return None;
             }
-            let val = sum / pivot_val;
-            if val < 0 || val > bound {
-                return None;
-            }
-            sol[pc] = val;
-            total += val as u32;
+            sum / pivot_val
+        };
+
+        if val < 0 || val > bound {
+            return None;
+        }
+
+        total += val as u32;
+        if total >= best {
+            return None;
         }
     }
 
     Some(total)
 }
 
-#[inline]
+#[inline(always)]
 fn gcd(mut a: i32, mut b: i32) -> i32 {
     while b != 0 {
         let t = b;

@@ -102,9 +102,8 @@ fn max_area_any(points: &[[i32; 2]]) -> u64 {
 struct Coverage {
     prefix: Vec<u64>,
     stride: usize,
-    // Precomputed mappings for O(1) lookups
-    x_to_idx: std::collections::HashMap<i32, usize>,
-    y_to_idx: std::collections::HashMap<i32, usize>,
+    xs: Vec<i32>,
+    ys: Vec<i32>,
 }
 
 #[inline(always)]
@@ -223,21 +222,11 @@ fn build_coverage(points: &[[i32; 2]]) -> Result<Coverage, String> {
         }
     }
 
-    // Build O(1) lookup maps
-    let mut x_to_idx = std::collections::HashMap::with_capacity(xs.len());
-    for (i, &x) in xs.iter().enumerate() {
-        x_to_idx.insert(x, i);
-    }
-    let mut y_to_idx = std::collections::HashMap::with_capacity(ys.len());
-    for (i, &y) in ys.iter().enumerate() {
-        y_to_idx.insert(y, i);
-    }
-
     Ok(Coverage {
         prefix,
         stride,
-        x_to_idx,
-        y_to_idx,
+        xs,
+        ys,
     })
 }
 
@@ -250,13 +239,13 @@ fn max_area_within_green(points: &[[i32; 2]], coverage: &Coverage) -> u64 {
         return 0;
     }
 
-    // Precompute index lookups for each point's coordinates
+    // Precompute index lookups for each point's coordinates.
     let mut point_indices: Vec<(usize, usize, usize, usize)> = Vec::with_capacity(n);
     for &[x, y] in points {
-        let xi = *coverage.x_to_idx.get(&x).unwrap();
-        let xi1 = *coverage.x_to_idx.get(&(x + 1)).unwrap();
-        let yi = *coverage.y_to_idx.get(&y).unwrap();
-        let yi1 = *coverage.y_to_idx.get(&(y + 1)).unwrap();
+        let xi = lower_bound(&coverage.xs, x);
+        let xi1 = lower_bound(&coverage.xs, x + 1);
+        let yi = lower_bound(&coverage.ys, y);
+        let yi1 = lower_bound(&coverage.ys, y + 1);
         point_indices.push((xi, xi1, yi, yi1));
     }
 
@@ -340,10 +329,7 @@ fn parse_int(bytes: &[u8], len: usize, idx: &mut usize) -> Result<i32, String> {
         if b < b'0' || b > b'9' {
             break;
         }
-        val = val
-            .checked_mul(10)
-            .and_then(|v| v.checked_add((b - b'0') as i32))
-            .ok_or_else(|| "value overflowed i32".to_string())?;
+        val = val * 10 + (b - b'0') as i32;
         *idx += 1;
     }
 

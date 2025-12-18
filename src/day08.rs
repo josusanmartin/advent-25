@@ -15,11 +15,29 @@ pub fn both(input: &str) -> Result<(u64, u64), String> {
     solve_with_limit(input, 1000)
 }
 
-#[derive(Copy, Clone)]
+use std::cmp::Ordering;
+use std::collections::BinaryHeap;
+
+#[derive(Copy, Clone, Eq, PartialEq)]
 struct Edge {
     dist: u64,
     a: u16,
     b: u16,
+}
+
+impl Ord for Edge {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.dist
+            .cmp(&other.dist)
+            .then_with(|| self.a.cmp(&other.a))
+            .then_with(|| self.b.cmp(&other.b))
+    }
+}
+
+impl PartialOrd for Edge {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 fn solve_with_limit(input: &str, pair_limit: usize) -> Result<(u64, u64), String> {
@@ -28,126 +46,127 @@ fn solve_with_limit(input: &str, pair_limit: usize) -> Result<(u64, u64), String
     if n == 0 {
         return Err("input contained no points".into());
     }
+    if n > u16::MAX as usize {
+        return Err("too many points".into());
+    }
+    if n < 2 {
+        return Err("need at least two points".into());
+    }
 
-    let mut edges = build_edges(&points);
-    let limit = pair_limit.min(edges.len());
+    let total_edges = n * (n - 1) / 2;
+    let limit = pair_limit.min(total_edges);
+
+    let mut smallest: BinaryHeap<Edge> = BinaryHeap::with_capacity(limit.saturating_add(1));
+
+    // Prim's algorithm over the implicit complete graph:
+    // - compute the MST's maximum edge weight (last edge Kruskal would add with unique weights)
+    // - while computing distances, also maintain the `limit` smallest edges for part 1
+    let mut min_dist = vec![u64::MAX; n];
+    let mut parent = vec![0usize; n];
+    min_dist[0] = 0;
+
+    let mut max_edge: Option<(u64, usize, usize)> = None;
+    let mut heap_full = limit == 0;
+    let mut heap_max = Edge { dist: u64::MAX, a: 0, b: 0 };
+
+    let mut remaining: Vec<usize> = (0..n).collect();
+    for _ in 0..n {
+        let mut best = u64::MAX;
+        let mut best_pos = 0usize;
+        let mut u = unsafe { *remaining.get_unchecked(0) };
+        for (pos, &idx) in remaining.iter().enumerate() {
+            let d = unsafe { *min_dist.get_unchecked(idx) };
+            if d < best || (d == best && idx < u) {
+                best = d;
+                best_pos = pos;
+                u = idx;
+            }
+        }
+        remaining.swap_remove(best_pos);
+
+        if u != 0 {
+            let a = unsafe { *parent.get_unchecked(u) };
+            let b = u;
+            match max_edge {
+                Some((d, _, _)) if d >= best => {}
+                _ => max_edge = Some((best, a, b)),
+            }
+        }
+
+        let pu = unsafe { points.get_unchecked(u) };
+        for &v in remaining.iter() {
+            let pv = unsafe { points.get_unchecked(v) };
+            let dist = sq_dist(pu, pv);
+
+            if limit != 0 {
+                if !heap_full {
+                    let (a, b) = if u < v { (u, v) } else { (v, u) };
+                    smallest.push(Edge {
+                        dist,
+                        a: a as u16,
+                        b: b as u16,
+                    });
+                    if smallest.len() == limit {
+                        heap_full = true;
+                        heap_max = unsafe { *smallest.peek().unwrap_unchecked() };
+                    }
+                } else if dist < heap_max.dist {
+                    let (a, b) = if u < v { (u, v) } else { (v, u) };
+                    smallest.pop();
+                    smallest.push(Edge {
+                        dist,
+                        a: a as u16,
+                        b: b as u16,
+                    });
+                    heap_max = unsafe { *smallest.peek().unwrap_unchecked() };
+                } else if dist == heap_max.dist {
+                    let (a, b) = if u < v { (u, v) } else { (v, u) };
+                    let edge = Edge {
+                        dist,
+                        a: a as u16,
+                        b: b as u16,
+                    };
+                    if edge < heap_max {
+                        smallest.pop();
+                        smallest.push(edge);
+                        heap_max = unsafe { *smallest.peek().unwrap_unchecked() };
+                    }
+                }
+            }
+
+            let cur = unsafe { *min_dist.get_unchecked(v) };
+            if dist < cur || (dist == cur && u < unsafe { *parent.get_unchecked(v) }) {
+                unsafe {
+                    *min_dist.get_unchecked_mut(v) = dist;
+                    *parent.get_unchecked_mut(v) = u;
+                }
+            }
+        }
+    }
+
+    let (_max_dist, max_a, max_b) =
+        max_edge.ok_or_else(|| "graph never became fully connected".to_string())?;
 
     let mut parents: Vec<u16> = (0..n as u16).collect();
     let mut sizes = vec![1u32; n];
-    let mut comps = n as u32;
-    let mut part1_done = limit == 0;
-    let mut top_after_limit = [0u32; 3];
-    let mut part2_product: Option<u64> = None;
-
-    let mut processed = 0usize;
-    let mut edges_seen = 0usize;
-    let mut chunk = 8192usize.min(edges.len().max(1));
-
-    while processed < edges.len() {
-        let tail = &mut edges[processed..];
-        let take = chunk.min(tail.len());
-        if take == 0 {
-            break;
-        }
-
-        tail.select_nth_unstable_by(take - 1, |a, b| a.dist.cmp(&b.dist));
-        radix_sort_edges(&mut tail[..take]);
-
-        for edge in &tail[..take] {
-            edges_seen += 1;
-            if union(edge.a, edge.b, &mut parents, &mut sizes) {
-                comps -= 1;
-                if part2_product.is_none() && comps == 1 {
-                    let ax = unsafe { *points.get_unchecked(edge.a as usize) }[0] as i64;
-                    let bx = unsafe { *points.get_unchecked(edge.b as usize) }[0] as i64;
-                    part2_product = Some((ax * bx) as u64);
-                }
-            }
-
-            if !part1_done && edges_seen == limit {
-                top_after_limit = top_three(&parents, &sizes);
-                part1_done = true;
-                if part2_product.is_some() {
-                    break;
-                }
-            }
-        }
-
-        if part1_done && part2_product.is_some() {
-            break;
-        }
-
-        processed += take;
-        let remaining = edges.len() - processed;
-        if remaining == 0 {
-            break;
-        }
-        chunk = (chunk.saturating_mul(2)).min(remaining);
+    for edge in smallest.into_iter() {
+        let _ = union(edge.a, edge.b, &mut parents, &mut sizes);
     }
-
-    if !part1_done {
-        top_after_limit = top_three(&parents, &sizes);
-    }
+    let top_after_limit = top_three(&parents, &sizes);
 
     let p1 = top_after_limit[0] as u64 * top_after_limit[1] as u64 * top_after_limit[2] as u64;
-    let p2 = part2_product.ok_or_else(|| "graph never became fully connected".to_string())?;
+    let ax = unsafe { *points.get_unchecked(max_a) }[0];
+    let bx = unsafe { *points.get_unchecked(max_b) }[0];
+    let p2 = (ax * bx) as u64;
     Ok((p1, p2))
 }
 
 #[inline(always)]
-fn radix_sort_edges(edges: &mut [Edge]) {
-    let len = edges.len();
-    if len <= 1 {
-        return;
-    }
-
-    let mut buf = vec![Edge { dist: 0, a: 0, b: 0 }; len];
-
-    const RADIX: usize = 1 << 16;
-    let mut counts = [0usize; RADIX];
-    let mut offsets = [0usize; RADIX];
-
-    // Track which buffer contains the result
-    let mut in_buf = false;
-
-    let mut shift = 0u32;
-    while shift < 64 {
-        counts.fill(0);
-
-        let src: &[Edge] = if in_buf { &buf } else { edges };
-        for e in src.iter() {
-            counts[((e.dist >> shift) & 0xFFFF) as usize] += 1;
-        }
-
-        let mut sum = 0usize;
-        for i in 0..RADIX {
-            let c = unsafe { *counts.get_unchecked(i) };
-            unsafe { *offsets.get_unchecked_mut(i) = sum };
-            sum += c;
-        }
-
-        let (src, dst): (&[Edge], &mut [Edge]) = if in_buf {
-            (&buf, edges)
-        } else {
-            (edges, &mut buf)
-        };
-
-        for e in src.iter() {
-            let idx = ((e.dist >> shift) & 0xFFFF) as usize;
-            let pos = unsafe { *offsets.get_unchecked(idx) };
-            unsafe {
-                *dst.get_unchecked_mut(pos) = *e;
-                *offsets.get_unchecked_mut(idx) = pos + 1;
-            }
-        }
-
-        in_buf = !in_buf;
-        shift += 16;
-    }
-
-    if in_buf {
-        edges.copy_from_slice(&buf);
-    }
+fn sq_dist(a: &[i64; 3], b: &[i64; 3]) -> u64 {
+    let dx = unsafe { *a.get_unchecked(0) } - unsafe { *b.get_unchecked(0) };
+    let dy = unsafe { *a.get_unchecked(1) } - unsafe { *b.get_unchecked(1) };
+    let dz = unsafe { *a.get_unchecked(2) } - unsafe { *b.get_unchecked(2) };
+    (dx * dx + dy * dy + dz * dz) as u64
 }
 
 #[inline(always)]
@@ -171,39 +190,11 @@ fn top_three(parents: &[u16], sizes: &[u32]) -> [u32; 3] {
     top
 }
 
-fn build_edges(points: &[[i32; 3]]) -> Vec<Edge> {
-    let n = points.len();
-    let total = n * (n - 1) / 2;
-    let mut edges: Vec<Edge> = Vec::with_capacity(total);
-    unsafe { edges.set_len(total) };
-
-    let mut idx = 0usize;
-    for i in 0..n {
-        let pi = points[i];
-        for j in (i + 1)..n {
-            let pj = points[j];
-            let dx = (pi[0] as i64) - (pj[0] as i64);
-            let dy = (pi[1] as i64) - (pj[1] as i64);
-            let dz = (pi[2] as i64) - (pj[2] as i64);
-            let dist = (dx * dx + dy * dy + dz * dz) as u64;
-            unsafe {
-                *edges.get_unchecked_mut(idx) = Edge {
-                    dist,
-                    a: i as u16,
-                    b: j as u16,
-                };
-            }
-            idx += 1;
-        }
-    }
-    edges
-}
-
-fn parse_points(input: &str) -> Result<Vec<[i32; 3]>, String> {
+fn parse_points(input: &str) -> Result<Vec<[i64; 3]>, String> {
     let bytes = input.as_bytes();
     let len = bytes.len();
     let mut idx = 0usize;
-    let mut points: Vec<[i32; 3]> = Vec::with_capacity(1024);
+    let mut points: Vec<[i64; 3]> = Vec::with_capacity(1024);
 
     while idx < len {
         while idx < len {
@@ -238,7 +229,7 @@ fn parse_points(input: &str) -> Result<Vec<[i32; 3]>, String> {
             }
         }
 
-        points.push([x, y, z]);
+        points.push([x as i64, y as i64, z as i64]);
     }
 
     Ok(points)
