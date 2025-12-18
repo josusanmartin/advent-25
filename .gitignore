@@ -1,0 +1,18 @@
+/target/
+/outputs/
+/output/
+*.rs.bk
+*.swp
+*.swo
+*.tmp
+*.log
+.DS_Store
+.idea/
+.vscode/
+
+day2_flame.svg
+day2_top.txt
+
+# Rust (cargo)
+**/*.rmeta
+**/*.rlib
