@@ -9,23 +9,23 @@ Claude Code and Codex.
 
 ## Performance
 
-| Day | Time |
-|-----|------|
-| 1 | 43µs |
-| 2 | 17µs |
-| 3 | 140µs |
-| 4 | 329µs |
-| 5 | 34µs |
-| 6 | 94µs |
-| 7 | 42µs |
-| 8 | 1.68ms |
-| 9 | 967µs |
-| 10 | 1.72ms |
-| 11 | 201µs |
-| 12 | 246µs |
-| **Total** | **5.51ms** |
+| Day | Mean | Median | Min | Max |
+|-----|------|--------|-----|-----|
+| 1 | 44µs | 42µs | 37µs | 104µs |
+| 2 | 18µs | 17µs | 15µs | 65µs |
+| 3 | 143µs | 144µs | 124µs | 186µs |
+| 4 | 334µs | 339µs | 291µs | 368µs |
+| 5 | 35µs | 35µs | 30µs | 54µs |
+| 6 | 97µs | 97µs | 83µs | 126µs |
+| 7 | 43µs | 42µs | 37µs | 66µs |
+| 8 | 1.70ms | 1.70ms | 1.49ms | 1.91ms |
+| 9 | 980µs | 984µs | 697µs | 1.44ms |
+| 10 | 1.72ms | 1.70ms | 1.55ms | 2.22ms |
+| 11 | 199µs | 196µs | 176µs | 347µs |
+| 12 | 248µs | 239µs | 202µs | 431µs |
+| **Total** | **5.56ms** | **5.54ms** | **4.73ms** | **7.32ms** |
 
-*Mean of 100 runs on Apple M3 Pro, `cargo run --release -- all seq`*
+*100 runs on Apple M3 Pro, `cargo run --release -- all seq`*
 
 Wall-clock time (100 runs, Apple M3 Pro):
 
