@@ -1,7 +1,7 @@
-# Advent of Code 25 in 2.1ms (Rust)
+# Advent of Code 25 in 2ms (Rust)
 
 Highly optimized Advent of Code 2025 solutions with a performance-first runner.
-All implemented days (1-12) execute in just 2.1ms total in release mode.
+All implemented days (1-12) execute in ~2ms total in release mode (parallel).
 
 This repository is an experiment and a learning project: everything here is written in Rust as a way
 to learn the language. I did not have prior Rust experience and built these solutions with help from
@@ -11,30 +11,36 @@ Claude Code and Codex.
 
 | Day | Time |
 |-----|------|
-| 1 | 41µs |
-| 2 | 16µs |
-| 3 | 139µs |
+| 1 | 43µs |
+| 2 | 17µs |
+| 3 | 140µs |
 | 4 | 329µs |
 | 5 | 34µs |
 | 6 | 94µs |
-| 7 | 41µs |
-| 8 | 1.65ms |
-| 9 | 1.08ms |
-| 10 | 2.75ms |
-| 11 | 189µs |
-| 12 | 248µs |
-| **Total** | **6.6ms** |
+| 7 | 42µs |
+| 8 | 1.68ms |
+| 9 | 967µs |
+| 10 | 1.72ms |
+| 11 | 201µs |
+| 12 | 246µs |
+| **Total** | **5.51ms** |
 
-*Average of 100 runs on Apple M3 Pro, `cargo run --release -- all seq`*
+*Mean of 100 runs on Apple M3 Pro, `cargo run --release -- all seq`*
 
-Wall-clock time (average of 100 runs, Apple M3 Pro):
-- **Parallel (default)**: 2.1ms
-- **Sequential**: 5.6ms
+Wall-clock time (100 runs, Apple M3 Pro):
 
-The table total (6.6ms) is the sum of individual day timings, while wall-clock (5.6ms) measures
-start-to-finish execution. The difference (~1ms) is due to measurement overhead: each day's timer
-includes `Instant::now()` calls that slightly overestimate duration, whereas the wall-clock timer
-runs continuously and captures actual elapsed time more accurately.
+| Mode | Mean | Median | Min | Max |
+|------|------|--------|-----|-----|
+| **Parallel** | 2.08ms | 2.06ms | 1.92ms | 2.74ms |
+| **Sequential** | 5.57ms | 5.52ms | 5.11ms | 7.27ms |
+
+The table shows per-day times measured sequentially. In parallel mode, days run concurrently on
+multiple cores, so the wall-clock time (~2ms) is much less than the sum of individual day times
+(~6ms). Day 10 benefits most from parallelization as it uses rayon internally.
+
+**Disclaimer**: These timings may be inaccurate due to the inherent difficulties of microbenchmarking
+and my lack of experience with Rust profiling. Using [samply](https://github.com/mstange/samply) for
+more rigorous profiling is on my to-do list.
 
 <details>
 <summary>Benchmark script</summary>
@@ -42,39 +48,30 @@ runs continuously and captures actual elapsed time more accurately.
 ```python
 import subprocess
 import re
-from collections import defaultdict
+import statistics
 
-day_times = defaultdict(list)
+def run_benchmark(args, iterations=100):
+    wall_times = []
+    for _ in range(iterations):
+        result = subprocess.run(
+            ['./target/release/advent-25'] + args,
+            capture_output=True, text=True
+        )
+        m = re.search(r'Total execution time: ([\d.]+)(µs|ms)', result.stderr)
+        if m:
+            val = float(m.group(1))
+            wall_times.append(val if m.group(2) == 'ms' else val / 1000)
+    return wall_times
 
-for _ in range(100):
-    result = subprocess.run(
-        ['./target/release/advent-25', 'all', 'seq'],
-        capture_output=True, text=True
-    )
-    output = result.stdout + result.stderr
-    for m in re.finditer(
-        r'Execution time \(day (\d+)\): ([\d.]+)(µs|ms|ns)', output
-    ):
-        day = int(m.group(1))
-        val = float(m.group(2))
-        unit = m.group(3)
-        if unit == 'ms':
-            val *= 1000
-        elif unit == 'ns':
-            val /= 1000
-        day_times[day].append(val)
+def stats(times, label):
+    print(f'{label}: mean={statistics.mean(times):.2f}ms, '
+          f'median={statistics.median(times):.2f}ms, '
+          f'min={min(times):.2f}ms, max={max(times):.2f}ms')
 
-total = 0
-for d in range(1, 13):
-    if day_times[d]:
-        avg = sum(day_times[d]) / len(day_times[d])
-        total += avg
-        if avg >= 1000:
-            print(f'| {d} | {avg/1000:.2f}ms |')
-        else:
-            print(f'| {d} | {int(round(avg))}µs |')
-
-print(f'| **Total** | **{total/1000:.1f}ms** |')
+par = run_benchmark(['all'])
+seq = run_benchmark(['all', 'seq'])
+stats(par, 'Parallel')
+stats(seq, 'Sequential')
 ```
 
 </details>
