@@ -9,6 +9,11 @@ Claude Code and Codex.
 
 ## Performance
 
+### Solver time (what we optimize for)
+
+These times measure pure solver execution, excluding process startup overhead.
+Measured by calling solver functions directly in a loop within an already-running process.
+
 | Day | Mean | Median | Min | Max |
 |-----|------|--------|-----|-----|
 | 1 | 35µs | 33µs | 32µs | 80µs |
@@ -25,32 +30,62 @@ Claude Code and Codex.
 | 12 | 238µs | 228µs | 191µs | 593µs |
 | **Total** | **5.17ms** | **5.07ms** | **4.41ms** | **11.22ms** |
 
-Wall-clock time:
+Wall-clock time (solver only):
 
 | Mode | Mean | Median | Min | Max |
 |------|------|--------|-----|-----|
 | **Parallel** | 1.87ms | 1.86ms | 1.72ms | 2.18ms |
 | **Sequential** | 5.18ms | 5.04ms | 4.64ms | 9.37ms |
 
-*100 iterations on Apple M3 Pro*
+*100 iterations on Apple M3 Pro, via `cargo run --release --bin benchmark`*
 
 The table shows per-day times measured sequentially. In parallel mode, days run concurrently on
 multiple cores, so the wall-clock time (~1.9ms) is much less than the sum of individual day times
 (~5ms). Day 10 benefits most from parallelization as it uses rayon internally.
 
-**Disclaimer**: These timings may be inaccurate due to the inherent difficulties of microbenchmarking
-and my lack of experience with Rust profiling. Using [samply](https://github.com/mstange/samply) for
-more rigorous profiling is on my to-do list.
+### End-to-end time (what you experience)
+
+When running the binary directly, there's additional overhead from process startup, runtime
+initialization, and output. [Hyperfine](https://github.com/sharkdp/hyperfine) measures this:
+
+```
+$ hyperfine --warmup 10 -N './target/release/advent-25 all'
+Time (mean ± σ):       3.8 ms ±   0.3 ms
+Range (min … max):     3.4 ms …  10.6 ms
+```
+
+**Time breakdown:**
+
+| Component | Time |
+|-----------|------|
+| Solver execution (parallel) | ~1.9ms |
+| Process overhead (binary loading, runtime init, arg parsing) | ~0.8ms |
+| Hyperfine measurement overhead | ~1.3ms |
+| **Total (hyperfine)** | **~4ms** |
+
+So the "<2ms" claim refers to solver time. Actual end-to-end execution is ~2.7ms, and hyperfine
+reports ~4ms due to its own measurement overhead.
 
 ### Running benchmarks
 
 ```bash
-# Rust benchmark (recommended) - runs 100 iterations, shows stats
+# Rust benchmark - measures solver time only (recommended for optimization)
 cargo run --release --bin benchmark
 
-# Python benchmark - compares current run against README reference values
-python3 scripts/benchmark.py
+# Hyperfine - measures end-to-end time including process startup
+hyperfine --warmup 10 -N './target/release/advent-25 all'
+
+# Compare parallel vs sequential with hyperfine
+hyperfine --warmup 10 -N \
+  './target/release/advent-25 all' \
+  './target/release/advent-25 all seq'
 ```
+
+### Disclaimer
+
+These timings may be inaccurate due to the inherent difficulties of microbenchmarking and my lack
+of experience with Rust profiling. Using [samply](https://github.com/mstange/samply) for more
+rigorous profiling is on my to-do list.
 
 ## Highlights
 - Sub-10ms total runtime for days 1-12 in release builds (hardware dependent).
@@ -71,8 +106,8 @@ ADVENT_HIDE_TIMING=1 cargo run --release -- all
 `inputs/*.txt` are compiled in via `include_str!` for days 1-12. Update those files
 to rerun with different inputs. For other days, input is read from stdin.
 
-## Performance and profiling
-Timings are printed to stderr; the total time is reported when running `all`.
+## Profiling with pprof
+
 Set `PPROF=1` when running day 2 to generate `day2_flame.svg` and `day2_top.txt`.
 Use `PPROF_LOOPS` to increase the number of iterations for more stable samples.
 
