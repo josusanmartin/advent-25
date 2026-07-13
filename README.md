@@ -15,6 +15,40 @@ Claude Code and Codex.
 These times measure pure solver execution, excluding process startup overhead.
 Measured by calling solver functions directly in a loop within an already-running process.
 
+The original solver table is intentionally retained below so the improvement made by the
+**Codex GPT 5.6 Sol** optimization pass remains visible. The original per-day snapshot was measured
+on an M3 Pro and the optimized snapshot on an M3 Max, so the separate same-machine comparison in
+the next section is the controlled before/after measurement.
+
+#### Original solver snapshot
+
+| Day | Mean | Median | Min | Max |
+|-----|------|--------|-----|-----|
+| 1 | 35µs | 33µs | 32µs | 80µs |
+| 2 | 12µs | 12µs | 9µs | 47µs |
+| 3 | 126µs | 124µs | 108µs | 200µs |
+| 4 | 300µs | 289µs | 253µs | 561µs |
+| 5 | 31µs | 30µs | 27µs | 62µs |
+| 6 | 85µs | 82µs | 68µs | 200µs |
+| 7 | 38µs | 37µs | 33µs | 86µs |
+| 8 | 1.74ms | 1.68ms | 1.60ms | 4.14ms |
+| 9 | 905µs | 941µs | 588µs | 2.16ms |
+| 10 | 1.48ms | 1.44ms | 1.34ms | 2.71ms |
+| 11 | 184µs | 177µs | 157µs | 381µs |
+| 12 | 238µs | 228µs | 191µs | 593µs |
+| **Total** | **5.17ms** | **5.07ms** | **4.41ms** | **11.22ms** |
+
+Original wall-clock time (solver only):
+
+| Mode | Mean | Median | Min | Max |
+|------|------|--------|-----|-----|
+| **Parallel** | 1.87ms | 1.86ms | 1.72ms | 2.18ms |
+| **Sequential** | 5.18ms | 5.04ms | 4.64ms | 9.37ms |
+
+*Original 100-iteration snapshot on an Apple M3 Pro.*
+
+#### Codex GPT 5.6 Sol optimized solver snapshot
+
 | Day | Mean | Median | Min | Max |
 |-----|------|--------|-----|-----|
 | 1 | 19µs | 18µs | 16µs | 114µs |
@@ -31,7 +65,7 @@ Measured by calling solver functions directly in a loop within an already-runnin
 | 12 | 124µs | 119µs | 109µs | 252µs |
 | **Total** | **2.46ms** | **2.33ms** | **2.07ms** | **5.13ms** |
 
-Wall-clock time (solver only):
+Optimized wall-clock time (solver only):
 
 | Mode | Mean | Median | Min | Max |
 |------|------|--------|-----|-----|
