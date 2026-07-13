@@ -175,22 +175,20 @@ fn merge_ranges(mut ranges: Vec<(u64, u64)>) -> Vec<(u64, u64)> {
     }
 
     ranges.sort_unstable_by_key(|&(start, _)| start);
-    let mut merged = Vec::with_capacity(ranges.len());
-    let mut current = ranges[0];
-
-    for &(start, end) in ranges.iter().skip(1) {
-        if start <= current.1 + 1 {
-            if end > current.1 {
-                current.1 = end;
+    let mut write = 0usize;
+    for read in 1..ranges.len() {
+        let (start, end) = unsafe { *ranges.get_unchecked(read) };
+        if start <= unsafe { ranges.get_unchecked(write).1 } + 1 {
+            if end > unsafe { ranges.get_unchecked(write).1 } {
+                unsafe { ranges.get_unchecked_mut(write).1 = end };
             }
         } else {
-            merged.push(current);
-            current = (start, end);
+            write += 1;
+            unsafe { *ranges.get_unchecked_mut(write) = (start, end) };
         }
     }
-    merged.push(current);
-
-    merged
+    ranges.truncate(write + 1);
+    ranges
 }
 
 fn is_fresh(id: u64, ranges: &[(u64, u64)]) -> bool {

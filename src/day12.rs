@@ -17,24 +17,37 @@ struct Shape {
     max_height: usize,
 }
 
-struct Region {
-    width: usize,
-    height: usize,
-    counts: Vec<usize>,
-}
-
 // Day 12 has no part 2 (it's the final day of Advent of Code)
 pub fn part1(input: &str) -> Result<u64, String> {
-    let (shapes, regions) = parse(input)?;
+    let shapes = parse_shapes(input)?;
     if shapes.is_empty() {
         return Ok(0);
     }
 
     let (max_w, max_h) = max_shape_dims(&shapes);
     let mut ok = 0u64;
+    let mut counts = Vec::with_capacity(shapes.len());
 
-    for region in regions {
-        if can_fit(&region, &shapes, max_w, max_h) {
+    for line in input.lines() {
+        let Some((width, height, count_text)) = parse_region_dimensions(line) else {
+            continue;
+        };
+        counts.clear();
+        for value in count_text.split_whitespace() {
+            counts.push(
+                value
+                    .parse::<usize>()
+                    .map_err(|_| format!("Invalid region count '{}'", value))?,
+            );
+        }
+        if counts.len() != shapes.len() {
+            return Err(format!(
+                "Region had {} counts but {} shapes exist",
+                counts.len(),
+                shapes.len()
+            ));
+        }
+        if can_fit(width, height, &counts, &shapes, max_w, max_h) {
             ok += 1;
         }
     }
@@ -42,28 +55,35 @@ pub fn part1(input: &str) -> Result<u64, String> {
     Ok(ok)
 }
 
-fn can_fit(region: &Region, shapes: &[Shape], max_w: usize, max_h: usize) -> bool {
+fn can_fit(
+    width: usize,
+    height: usize,
+    counts: &[usize],
+    shapes: &[Shape],
+    max_w: usize,
+    max_h: usize,
+) -> bool {
     let total_area: usize = shapes
         .iter()
-        .zip(&region.counts)
+        .zip(counts)
         .map(|(shape, &cnt)| shape.area * cnt)
         .sum();
-    let board_area = region.width * region.height;
+    let board_area = width * height;
     if total_area > board_area {
         return false;
     }
 
-    let total_shapes: usize = region.counts.iter().sum();
+    let total_shapes: usize = counts.iter().sum();
     if total_shapes == 0 {
         return true;
     }
 
-    let slots = (region.width / max_w) * (region.height / max_h);
+    let slots = (width / max_w) * (height / max_h);
     if total_shapes <= slots {
         return true;
     }
 
-    can_fit_exact(region.width, region.height, shapes, &region.counts, total_area)
+    can_fit_exact(width, height, shapes, counts, total_area)
 }
 
 #[derive(Clone)]
@@ -224,7 +244,7 @@ fn max_shape_dims(shapes: &[Shape]) -> (usize, usize) {
     })
 }
 
-fn parse(input: &str) -> Result<(Vec<Shape>, Vec<Region>), String> {
+fn parse_shapes(input: &str) -> Result<Vec<Shape>, String> {
     let mut lines = input.lines().peekable();
     let mut entries: Vec<(usize, Vec<String>)> = Vec::new();
 
@@ -234,7 +254,7 @@ fn parse(input: &str) -> Result<(Vec<Shape>, Vec<Region>), String> {
             lines.next();
             continue;
         }
-        if parse_region_line(line).is_some() {
+        if parse_region_dimensions(line).is_some() {
             break;
         }
 
@@ -253,7 +273,7 @@ fn parse(input: &str) -> Result<(Vec<Shape>, Vec<Region>), String> {
                 lines.next();
                 break;
             }
-            if parse_region_line(next).is_some() {
+            if parse_region_dimensions(next).is_some() {
                 break;
             }
             if next.ends_with(':') && next[..next.len() - 1].chars().all(|c| c.is_ascii_digit()) {
@@ -289,28 +309,10 @@ fn parse(input: &str) -> Result<(Vec<Shape>, Vec<Region>), String> {
         .map(|(idx, shape)| shape.ok_or_else(|| format!("Missing shape index {}", idx)))
         .collect::<Result<_, _>>()?;
 
-    let mut regions = Vec::new();
-    while let Some(line) = lines.next() {
-        if let Some((width, height, counts)) = parse_region_line(line) {
-            if counts.len() != shapes.len() {
-                return Err(format!(
-                    "Region had {} counts but {} shapes exist",
-                    counts.len(),
-                    shapes.len()
-                ));
-            }
-            regions.push(Region {
-                width,
-                height,
-                counts,
-            });
-        }
-    }
-
-    Ok((shapes, regions))
+    Ok(shapes)
 }
 
-fn parse_region_line(line: &str) -> Option<(usize, usize, Vec<usize>)> {
+fn parse_region_dimensions(line: &str) -> Option<(usize, usize, &str)> {
     let line = line.trim();
     if line.is_empty() {
         return None;
@@ -329,11 +331,6 @@ fn parse_region_line(line: &str) -> Option<(usize, usize, Vec<usize>)> {
     if dims_iter.next().is_some() {
         return None;
     }
-
-    let counts: Vec<usize> = counts
-        .split_whitespace()
-        .map(|val| val.parse::<usize>().ok())
-        .collect::<Option<Vec<_>>>()?;
 
     Some((width, height, counts))
 }

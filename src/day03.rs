@@ -39,7 +39,6 @@ pub fn part2(input: &str) -> Result<u64, String> {
 pub fn both(input: &str) -> Result<(u64, u64), String> {
     let mut total_2: u64 = 0;
     let mut total_12: u64 = 0;
-    let mut stack_2 = DigitStack::new();
     let mut stack_12 = DigitStack::new();
     let bytes = input.as_bytes();
     let mut line_idx = 0;
@@ -52,12 +51,7 @@ pub fn both(input: &str) -> Result<(u64, u64), String> {
                 end -= 1;
             }
             if end > start {
-                let (v2, v12) = max_numbers_from_line(
-                    &bytes[start..end],
-                    line_idx,
-                    &mut stack_2,
-                    &mut stack_12,
-                )?;
+                let (v2, v12) = max_numbers_from_line(&bytes[start..end], line_idx, &mut stack_12)?;
                 total_2 += v2;
                 total_12 += v12;
             }
@@ -72,8 +66,7 @@ pub fn both(input: &str) -> Result<(u64, u64), String> {
             end -= 1;
         }
         if end > start {
-            let (v2, v12) =
-                max_numbers_from_line(&bytes[start..end], line_idx, &mut stack_2, &mut stack_12)?;
+            let (v2, v12) = max_numbers_from_line(&bytes[start..end], line_idx, &mut stack_12)?;
             total_2 += v2;
             total_12 += v12;
         }
@@ -86,7 +79,6 @@ pub fn both(input: &str) -> Result<(u64, u64), String> {
 fn max_numbers_from_line(
     line: &[u8],
     line_idx: usize,
-    stack_2: &mut DigitStack,
     stack_12: &mut DigitStack,
 ) -> Result<(u64, u64), String> {
     if line.len() < 2 {
@@ -106,12 +98,25 @@ fn max_numbers_from_line(
         ));
     }
 
-    let mut remove_2 = line.len() - 2;
     let mut remove_12 = line.len() - PART2_DIGITS;
-    stack_2.reset();
     stack_12.reset();
 
-    for &b in line {
+    let first = unsafe { *line.get_unchecked(0) };
+    if !first.is_ascii_digit() {
+        return Err(format!(
+            "line {} contains non-digit character '{}'",
+            line_idx + 1,
+            first as char
+        ));
+    }
+    let first_digit = first - b'0';
+    unsafe { *stack_12.buf.get_unchecked_mut(0) = first_digit };
+    stack_12.len = 1;
+
+    let mut max_first = first_digit;
+    let mut value_2 = 0u8;
+
+    for &b in unsafe { line.get_unchecked(1..) } {
         if !(b'0'..=b'9').contains(&b) {
             return Err(format!(
                 "line {} contains non-digit character '{}'",
@@ -121,15 +126,13 @@ fn max_numbers_from_line(
         }
         let digit = b - b'0';
 
-        while remove_2 > 0
-            && stack_2.len > 0
-            && unsafe { *stack_2.buf.get_unchecked(stack_2.len - 1) } < digit
-        {
-            stack_2.len -= 1;
-            remove_2 -= 1;
+        let pair = max_first * 10 + digit;
+        if pair > value_2 {
+            value_2 = pair;
         }
-        unsafe { *stack_2.buf.get_unchecked_mut(stack_2.len) = digit };
-        stack_2.len += 1;
+        if digit > max_first {
+            max_first = digit;
+        }
 
         while remove_12 > 0
             && stack_12.len > 0
@@ -142,22 +145,16 @@ fn max_numbers_from_line(
         stack_12.len += 1;
     }
 
-    if remove_2 > 0 {
-        stack_2.len -= remove_2;
-    }
     if remove_12 > 0 {
         stack_12.len -= remove_12;
     }
-
-    let value_2 = (unsafe { *stack_2.buf.get_unchecked(0) } as u64) * 10
-        + unsafe { *stack_2.buf.get_unchecked(1) } as u64;
 
     let mut value_12: u64 = 0;
     for i in 0..stack_12.len {
         value_12 = value_12 * 10 + unsafe { *stack_12.buf.get_unchecked(i) } as u64;
     }
 
-    Ok((value_2, value_12))
+    Ok((value_2 as u64, value_12))
 }
 
 fn solve_single_pick<const PICK: usize>(input: &str) -> Result<u64, String> {

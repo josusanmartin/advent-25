@@ -115,8 +115,9 @@ fn run_all_days(run_mode: RunMode, show_timing: bool) -> Vec<RunOutcome> {
     if run_mode == RunMode::Sequential {
         let mut outcomes = Vec::new();
         for &day in &IMPLEMENTED_DAYS {
-            let input = embedded_input_for_day(day)
-                .unwrap_or_else(|| unreachable!("IMPLEMENTED_DAYS contained unexpected day {}", day));
+            let input = embedded_input_for_day(day).unwrap_or_else(|| {
+                unreachable!("IMPLEMENTED_DAYS contained unexpected day {}", day)
+            });
             outcomes.push(run_day(day, Part::Both, input, show_timing));
         }
         return outcomes;
@@ -129,8 +130,9 @@ fn run_all_days(run_mode: RunMode, show_timing: bool) -> Vec<RunOutcome> {
         let mut outcomes: Vec<RunOutcome> = IMPLEMENTED_DAYS
             .par_iter()
             .map(|&day| {
-                let input = embedded_input_for_day(day)
-                    .unwrap_or_else(|| unreachable!("IMPLEMENTED_DAYS contained unexpected day {}", day));
+                let input = embedded_input_for_day(day).unwrap_or_else(|| {
+                    unreachable!("IMPLEMENTED_DAYS contained unexpected day {}", day)
+                });
                 run_day(day, Part::Both, input, show_timing)
             })
             .collect();
@@ -142,8 +144,9 @@ fn run_all_days(run_mode: RunMode, show_timing: bool) -> Vec<RunOutcome> {
     {
         let mut outcomes = Vec::new();
         for &day in &IMPLEMENTED_DAYS {
-            let input = embedded_input_for_day(day)
-                .unwrap_or_else(|| unreachable!("IMPLEMENTED_DAYS contained unexpected day {}", day));
+            let input = embedded_input_for_day(day).unwrap_or_else(|| {
+                unreachable!("IMPLEMENTED_DAYS contained unexpected day {}", day)
+            });
             outcomes.push(run_day(day, Part::Both, input, show_timing));
         }
         outcomes

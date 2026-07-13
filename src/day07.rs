@@ -24,35 +24,47 @@ fn simulate(input: &str) -> Result<(u128, u128), String> {
     let mut current_counts = vec![0u128; width];
     let mut next_counts = vec![0u128; width];
     current_counts[start_col] = 1;
+    let mut current_active = vec![start_col];
+    let mut next_active = Vec::with_capacity(width);
     let mut splitters_hit: u128 = 0;
     let mut timelines: u128 = 1;
 
     for line in rows.iter().skip(start_row + 1) {
-        next_counts.fill(0);
-        for col in 0..width {
+        next_active.clear();
+        for &col in &current_active {
             let count = unsafe { *current_counts.get_unchecked(col) };
-            if count == 0 {
-                continue;
-            }
             let ch = unsafe { *line.get_unchecked(col) };
             if ch == b'^' {
                 splitters_hit += 1;
                 timelines += count;
                 if col > 0 {
-                    unsafe {
-                        *next_counts.get_unchecked_mut(col - 1) += count;
+                    let slot = unsafe { next_counts.get_unchecked_mut(col - 1) };
+                    if *slot == 0 {
+                        next_active.push(col - 1);
                     }
+                    *slot += count;
                 }
                 if col + 1 < width {
-                    unsafe {
-                        *next_counts.get_unchecked_mut(col + 1) += count;
+                    let slot = unsafe { next_counts.get_unchecked_mut(col + 1) };
+                    if *slot == 0 {
+                        next_active.push(col + 1);
                     }
+                    *slot += count;
                 }
             } else {
-                unsafe { *next_counts.get_unchecked_mut(col) += count };
+                let slot = unsafe { next_counts.get_unchecked_mut(col) };
+                if *slot == 0 {
+                    next_active.push(col);
+                }
+                *slot += count;
             }
         }
+
+        for &col in &current_active {
+            unsafe { *current_counts.get_unchecked_mut(col) = 0 };
+        }
         std::mem::swap(&mut current_counts, &mut next_counts);
+        std::mem::swap(&mut current_active, &mut next_active);
     }
 
     Ok((splitters_hit, timelines))

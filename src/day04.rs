@@ -50,6 +50,7 @@ struct Grid {
     data: Vec<u8>,
     width: usize,
     height: usize,
+    stride: usize,
 }
 
 fn solve_part1(input: &str) -> Result<usize, String> {
@@ -63,73 +64,61 @@ fn solve_part1(input: &str) -> Result<usize, String> {
 }
 
 fn parse_grid(input: &str) -> Result<Grid, String> {
-    let bytes = input.as_bytes();
-    let mut data = Vec::with_capacity(bytes.len());
-    let mut width = 0usize;
+    let mut width = None;
     let mut height = 0usize;
-    let mut col = 0usize;
+    let mut data = Vec::with_capacity(input.len() + 512);
 
-    for &b in bytes {
-        match b {
-            b'\n' => {
-                if col == 0 {
-                    continue;
-                }
-                if width == 0 {
-                    width = col;
-                } else if col != width {
-                    return Err(format!(
-                        "inconsistent row width: expected {}, found {} on row {}",
-                        width,
-                        col,
-                        height + 1
-                    ));
-                }
-                height += 1;
-                col = 0;
-            }
-            b'\r' => {}
-            b'.' => {
-                data.push(0);
-                col += 1;
-            }
-            b'@' => {
-                data.push(1);
-                col += 1;
-            }
-            other => {
-                return Err(format!(
-                    "invalid character '{}' at line {} column {}",
-                    other as char,
-                    height + 1,
-                    col + 1
-                ));
-            }
+    for raw_line in input.lines() {
+        let line = raw_line.trim_end_matches('\r').as_bytes();
+        if line.is_empty() {
+            continue;
         }
-    }
-
-    if col > 0 {
-        if width == 0 {
-            width = col;
-        } else if col != width {
+        let expected = *width.get_or_insert(line.len());
+        if line.len() != expected {
             return Err(format!(
                 "inconsistent row width: expected {}, found {} on row {}",
-                width,
-                col,
+                expected,
+                line.len(),
                 height + 1
             ));
         }
+        if height == 0 {
+            data.resize(expected + 2, 0);
+        }
+
+        data.push(0);
+        for (col, &b) in line.iter().enumerate() {
+            data.push(match b {
+                b'.' => 0,
+                b'@' => 1,
+                other => {
+                    return Err(format!(
+                        "invalid character '{}' at line {} column {}",
+                        other as char,
+                        height + 1,
+                        col + 1
+                    ));
+                }
+            });
+        }
+        data.push(0);
         height += 1;
     }
 
-    if width == 0 || height == 0 {
+    let Some(width) = width else {
+        return Err("input is empty".into());
+    };
+    if height == 0 {
         return Err("input is empty".into());
     }
+    let stride = width + 2;
+    data.resize(data.len() + stride, 0);
 
     Ok(Grid {
         data,
         width,
         height,
+        stride,
     })
 }
 
@@ -137,45 +126,28 @@ fn neighbor_counts(grid: &Grid) -> Vec<u8> {
     let mut counts = vec![0u8; grid.data.len()];
     let w = grid.width;
     let h = grid.height;
+    let stride = grid.stride;
     let data = &grid.data;
 
-    for r in 0..h {
-        let base = r * w;
-        let has_up = r > 0;
-        let has_down = r + 1 < h;
-        for c in 0..w {
+    for r in 1..=h {
+        let base = r * stride;
+        for c in 1..=w {
             let idx = base + c;
-            if data[idx] == 0 {
+            if unsafe { *data.get_unchecked(idx) } == 0 {
                 continue;
             }
-            let mut total = 0u8;
-            if c > 0 {
-                total += data[idx - 1];
-            }
-            if c + 1 < w {
-                total += data[idx + 1];
-            }
-            if has_up {
-                let up = idx - w;
-                total += data[up];
-                if c > 0 {
-                    total += data[up - 1];
-                }
-                if c + 1 < w {
-                    total += data[up + 1];
-                }
-            }
-            if has_down {
-                let down = idx + w;
-                total += data[down];
-                if c > 0 {
-                    total += data[down - 1];
-                }
-                if c + 1 < w {
-                    total += data[down + 1];
-                }
-            }
-            counts[idx] = total;
+            let up = idx - stride;
+            let down = idx + stride;
+            counts[idx] = unsafe {
+                *data.get_unchecked(idx - 1)
+                    + *data.get_unchecked(idx + 1)
+                    + *data.get_unchecked(up - 1)
+                    + *data.get_unchecked(up)
+                    + *data.get_unchecked(up + 1)
+                    + *data.get_unchecked(down - 1)
+                    + *data.get_unchecked(down)
+                    + *data.get_unchecked(down + 1)
+            };
         }
     }
 
@@ -184,10 +156,7 @@ fn neighbor_counts(grid: &Grid) -> Vec<u8> {
 
 #[inline(always)]
 fn update_neighbors(idx: usize, grid: &mut Grid, counts: &mut [u8], queue: &mut Vec<usize>) {
-    let w = grid.width;
-    let h = grid.height;
-    let r = idx / w;
-    let c = idx - r * w;
+    let stride = grid.stride;
 
     let mut push_neighbor = |n_idx: usize| {
         if grid.data[n_idx] == 1 {
@@ -201,30 +170,14 @@ fn update_neighbors(idx: usize, grid: &mut Grid, counts: &mut [u8], queue: &mut 
         }
     };
 
-    if c > 0 {
-        push_neighbor(idx - 1);
-        if r > 0 {
-            push_neighbor(idx - w - 1);
-        }
-        if r + 1 < h {
-            push_neighbor(idx + w - 1);
-        }
-    }
-    if c + 1 < w {
-        push_neighbor(idx + 1);
-        if r > 0 {
-            push_neighbor(idx - w + 1);
-        }
-        if r + 1 < h {
-            push_neighbor(idx + w + 1);
-        }
-    }
-    if r > 0 {
-        push_neighbor(idx - w);
-    }
-    if r + 1 < h {
-        push_neighbor(idx + w);
-    }
+    push_neighbor(idx - 1);
+    push_neighbor(idx + 1);
+    push_neighbor(idx - stride - 1);
+    push_neighbor(idx - stride);
+    push_neighbor(idx - stride + 1);
+    push_neighbor(idx + stride - 1);
+    push_neighbor(idx + stride);
+    push_neighbor(idx + stride + 1);
 }
 
 #[cfg(test)]

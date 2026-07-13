@@ -11,6 +11,8 @@ struct Machine {
     n: usize,
 }
 
+type BackSubRow = (i32, i32, i32, u8, [(u8, i32); 16]);
+
 pub fn part1(input: &str) -> Result<u64, String> {
     let machines = parse(input)?;
     #[cfg(feature = "parallel")]
@@ -178,6 +180,8 @@ fn solve_joltage(m: &Machine) -> u32 {
     if num_buttons == 0 {
         return u32::MAX;
     }
+    // Every press contributes at most one unit to any given counter.
+    let lower_bound = m.joltages.iter().copied().max().unwrap_or(0) as u32;
 
     // Compute upper bounds per button.
     let mut bounds = [u16::MAX; 16];
@@ -284,7 +288,7 @@ fn solve_joltage(m: &Machine) -> u32 {
     // Precompute back-substitution coefficients for faster evaluation.
     // Store sparse representation in terms of *free indices* (not columns).
     // Format: pivot_val, rhs, bound, num_terms, [(free_idx, coeff); 16]
-    let mut backsub = [(1i32, 0i32, 0i32, 0u8, [(0u8, 0i32); 16]); 16];
+    let mut backsub: [BackSubRow; 16] = [(1i32, 0i32, 0i32, 0u8, [(0u8, 0i32); 16]); 16];
     for r in 0..rank {
         let pc = pivot_col_for_row[r];
         let pivot_val = mat[r][pc];
@@ -305,13 +309,7 @@ fn solve_joltage(m: &Machine) -> u32 {
         for i in 0..num_terms {
             packed[i] = (terms[i].0 as u8, terms[i].1);
         }
-        backsub[r] = (
-            pivot_val,
-            rhs,
-            bounds[pc] as i32,
-            num_terms as u8,
-            packed,
-        );
+        backsub[r] = (pivot_val, rhs, bounds[pc] as i32, num_terms as u8, packed);
     }
 
     let mut best = u32::MAX;
@@ -322,21 +320,48 @@ fn solve_joltage(m: &Machine) -> u32 {
         max_vals[i] = free_bounds[i] as u32;
     }
 
+    // For fixed values of the other free variables, total presses are affine in one free
+    // variable. An exact rational slope therefore tells us which end contains the cheapest
+    // feasible value. This lets the specialized loops stop after their first feasible innermost
+    // value instead of evaluating every dominated value in that slice.
+    let mut descending = [None; 16];
+    for (free_idx, direction) in descending[..num_free].iter_mut().enumerate() {
+        *direction = objective_descends_with_value(&backsub, rank, free_idx);
+    }
     let mut free_vals = [0i32; 16];
     match num_free {
         0 => {
             if let Some(cost) = eval_fast(0, &free_vals, 0, &backsub, rank, best) {
+                if cost == lower_bound {
+                    return cost;
+                }
                 best = cost;
             }
         }
         1 => {
-            let max0 = max_vals[0] as i32;
-            for v0 in 0..=max0 {
+            let Some((min0, max0)) =
+                feasible_last_range(&free_vals, 0, max_vals[0] as i32, &backsub, rank)
+            else {
+                return best;
+            };
+            for step0 in 0..=max0 - min0 {
+                let v0 = ordered_value_in_range(step0, min0, max0, descending[0].unwrap_or(false));
                 if (v0 as u32) >= best {
-                    break;
+                    continue;
                 }
                 free_vals[0] = v0;
-                if let Some(cost) = eval_fast(1, &free_vals, v0 as u32, &backsub, rank, best) {
+                let limit = if descending[0].is_some() {
+                    u32::MAX
+                } else {
+                    best
+                };
+                if let Some(cost) = eval_fast(1, &free_vals, v0 as u32, &backsub, rank, limit) {
+                    if cost == lower_bound {
+                        return cost;
+                    }
+                    if descending[0].is_some() {
+                        return cost;
+                    }
                     best = cost;
                 }
             }
@@ -344,19 +369,45 @@ fn solve_joltage(m: &Machine) -> u32 {
         2 => {
             let max0 = max_vals[0] as i32;
             let max1 = max_vals[1] as i32;
-            for v0 in 0..=max0 {
+            for step0 in 0..=max0 {
+                let v0 = ordered_value(step0, max0, descending[0].unwrap_or(false));
                 if (v0 as u32) >= best {
-                    break;
+                    continue;
                 }
                 free_vals[0] = v0;
-                for v1 in 0..=max1 {
+                let max1_allowed = max_vals[1]
+                    .min(best.saturating_sub(v0 as u32 + 1))
+                    .min(max1 as u32) as i32;
+                let Some((min1, max1_feasible)) =
+                    feasible_last_range(&free_vals, 1, max1_allowed, &backsub, rank)
+                else {
+                    continue;
+                };
+                for step1 in 0..=max1_feasible - min1 {
+                    let v1 = ordered_value_in_range(
+                        step1,
+                        min1,
+                        max1_feasible,
+                        descending[1].unwrap_or(false),
+                    );
                     let partial = (v0 + v1) as u32;
                     if partial >= best {
-                        break;
+                        continue;
                     }
                     free_vals[1] = v1;
-                    if let Some(cost) = eval_fast(2, &free_vals, partial, &backsub, rank, best) {
-                        best = cost;
+                    let limit = if descending[1].is_some() {
+                        u32::MAX
+                    } else {
+                        best
+                    };
+                    if let Some(cost) = eval_fast(2, &free_vals, partial, &backsub, rank, limit) {
+                        if cost == lower_bound {
+                            return cost;
+                        }
+                        best = best.min(cost);
+                        if descending[1].is_some() {
+                            break;
+                        }
                     }
                 }
             }
@@ -365,28 +416,54 @@ fn solve_joltage(m: &Machine) -> u32 {
             let max0 = max_vals[0] as i32;
             let max1 = max_vals[1] as i32;
             let max2 = max_vals[2] as i32;
-            for v0 in 0..=max0 {
+            for step0 in 0..=max0 {
+                let v0 = ordered_value(step0, max0, descending[0].unwrap_or(false));
                 if (v0 as u32) >= best {
-                    break;
+                    continue;
                 }
                 free_vals[0] = v0;
-                for v1 in 0..=max1 {
+                let max1_allowed = max_vals[1]
+                    .min(best.saturating_sub(v0 as u32 + 1))
+                    .min(max1 as u32) as i32;
+                for step1 in 0..=max1_allowed {
+                    let v1 = ordered_value(step1, max1_allowed, descending[1].unwrap_or(false));
                     let partial01 = v0 + v1;
                     if (partial01 as u32) >= best {
-                        break;
+                        continue;
                     }
                     free_vals[1] = v1;
 
                     let remaining = best.saturating_sub(partial01 as u32 + 1);
                     let max2_allowed = (remaining.min(max_vals[2]) as i32).min(max2);
+                    let Some((min2, max2_feasible)) =
+                        feasible_last_range(&free_vals, 2, max2_allowed, &backsub, rank)
+                    else {
+                        continue;
+                    };
 
-                    for v2 in 0..=max2_allowed {
+                    for step2 in 0..=max2_feasible - min2 {
+                        let v2 = ordered_value_in_range(
+                            step2,
+                            min2,
+                            max2_feasible,
+                            descending[2].unwrap_or(false),
+                        );
                         let partial = (partial01 + v2) as u32;
                         free_vals[2] = v2;
-                        if let Some(cost) =
-                            eval_fast(3, &free_vals, partial, &backsub, rank, best)
+                        let limit = if descending[2].is_some() {
+                            u32::MAX
+                        } else {
+                            best
+                        };
+                        if let Some(cost) = eval_fast(3, &free_vals, partial, &backsub, rank, limit)
                         {
-                            best = cost;
+                            if cost == lower_bound {
+                                return cost;
+                            }
+                            best = best.min(cost);
+                            if descending[2].is_some() {
+                                break;
+                            }
                         }
                     }
                 }
@@ -402,6 +479,9 @@ fn solve_joltage(m: &Machine) -> u32 {
                     if let Some(cost) =
                         eval_fast(num_free, &free_vals, partial, &backsub, rank, best)
                     {
+                        if cost == lower_bound {
+                            return cost;
+                        }
                         best = cost;
                     }
                     if idx == 0 {
@@ -455,7 +535,7 @@ fn eval_fast(
     _num_free: usize,
     free_vals: &[i32; 16],
     total_free: u32,
-    backsub: &[(i32, i32, i32, u8, [(u8, i32); 16]); 16],
+    backsub: &[BackSubRow; 16],
     rank: usize,
     best: u32,
 ) -> Option<u32> {
@@ -491,6 +571,159 @@ fn eval_fast(
     }
 
     Some(total)
+}
+
+#[inline(always)]
+fn ordered_value(step: i32, max: i32, descending: bool) -> i32 {
+    if descending {
+        max - step
+    } else {
+        step
+    }
+}
+
+#[inline(always)]
+fn ordered_value_in_range(step: i32, min: i32, max: i32, descending: bool) -> i32 {
+    if descending {
+        max - step
+    } else {
+        min + step
+    }
+}
+
+/// Intersect the exact box constraints for every pivot variable to bound the final free variable
+/// in a specialized search slice. Divisibility is intentionally left to `eval_fast`.
+fn feasible_last_range(
+    free_vals: &[i32; 16],
+    last_free: usize,
+    max_value: i32,
+    backsub: &[BackSubRow; 16],
+    rank: usize,
+) -> Option<(i32, i32)> {
+    let mut lower = 0i64;
+    let mut upper = max_value as i64;
+
+    for &(pivot, rhs, bound, num_terms, ref terms) in &backsub[..rank] {
+        let mut base = rhs as i64;
+        let mut last_coefficient = 0i64;
+        for &(free_idx, coefficient) in &terms[..num_terms as usize] {
+            if free_idx as usize == last_free {
+                last_coefficient = coefficient as i64;
+            } else {
+                base -= coefficient as i64 * free_vals[free_idx as usize] as i64;
+            }
+        }
+
+        let bound_sum = pivot as i64 * bound as i64;
+        let required_low = bound_sum.min(0);
+        let required_high = bound_sum.max(0);
+        let slope = -last_coefficient;
+        if slope == 0 {
+            if base < required_low || base > required_high {
+                return None;
+            }
+            continue;
+        }
+
+        let (row_lower, row_upper) = if slope > 0 {
+            (
+                div_ceil(required_low - base, slope),
+                div_floor(required_high - base, slope),
+            )
+        } else {
+            (
+                div_ceil(required_high - base, slope),
+                div_floor(required_low - base, slope),
+            )
+        };
+        lower = lower.max(row_lower);
+        upper = upper.min(row_upper);
+        if lower > upper {
+            return None;
+        }
+    }
+
+    Some((lower as i32, upper as i32))
+}
+
+#[inline(always)]
+fn div_floor(numerator: i64, denominator: i64) -> i64 {
+    let quotient = numerator / denominator;
+    let remainder = numerator % denominator;
+    if remainder != 0 && (remainder > 0) != (denominator > 0) {
+        quotient - 1
+    } else {
+        quotient
+    }
+}
+
+#[inline(always)]
+fn div_ceil(numerator: i64, denominator: i64) -> i64 {
+    let quotient = numerator / denominator;
+    let remainder = numerator % denominator;
+    if remainder != 0 && (remainder > 0) == (denominator > 0) {
+        quotient + 1
+    } else {
+        quotient
+    }
+}
+
+/// Returns whether increasing `free_idx` decreases the exact affine objective. `None` means the
+/// checked i128 rational arithmetic overflowed, in which case callers retain exhaustive behavior.
+fn objective_descends_with_value(
+    backsub: &[BackSubRow; 16],
+    rank: usize,
+    free_idx: usize,
+) -> Option<bool> {
+    let mut numerator = 1i128;
+    let mut denominator = 1i128;
+
+    for &(pivot, _, _, num_terms, ref terms) in &backsub[..rank] {
+        let mut coefficient = 0i32;
+        for &(idx, value) in &terms[..num_terms as usize] {
+            if idx as usize == free_idx {
+                coefficient = value;
+                break;
+            }
+        }
+        if coefficient == 0 {
+            continue;
+        }
+
+        let mut term_numerator = -(coefficient as i128);
+        let mut term_denominator = pivot as i128;
+        if term_denominator < 0 {
+            term_numerator = -term_numerator;
+            term_denominator = -term_denominator;
+        }
+        let term_reduce = gcd_i128(term_numerator.checked_abs()?, term_denominator);
+        term_numerator /= term_reduce;
+        term_denominator /= term_reduce;
+
+        let shared = gcd_i128(denominator, term_denominator);
+        let lhs_scale = term_denominator / shared;
+        let rhs_scale = denominator / shared;
+        numerator = numerator
+            .checked_mul(lhs_scale)?
+            .checked_add(term_numerator.checked_mul(rhs_scale)?)?;
+        denominator = denominator.checked_mul(lhs_scale)?;
+
+        let reduce = gcd_i128(numerator.checked_abs()?, denominator);
+        numerator /= reduce;
+        denominator /= reduce;
+    }
+
+    Some(numerator < 0)
+}
+
+#[inline]
+fn gcd_i128(mut a: i128, mut b: i128) -> i128 {
+    while b != 0 {
+        let remainder = a % b;
+        a = b;
+        b = remainder;
+    }
+    a.max(1)
 }
 
 #[inline(always)]
@@ -623,5 +856,108 @@ mod tests {
         let (p1, p2) = both(EXAMPLE).unwrap();
         assert_eq!(p1, 7);
         assert_eq!(p2, 33);
+    }
+
+    #[test]
+    fn monotone_search_matches_bruteforce() {
+        let mut state = 0x9e37_79b9u32;
+        for case in 0..128 {
+            let n = 3 + case % 2;
+            let num_buttons = 2 + (case / 3) % 3;
+            let mut buttons = Vec::with_capacity(num_buttons);
+            while buttons.len() < num_buttons {
+                state = state.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+                let mut mask = ((state >> 16) as u16) & ((1 << n) - 1);
+                if mask == 0 {
+                    mask = 1;
+                }
+                if !buttons.contains(&mask) {
+                    buttons.push(mask);
+                }
+            }
+            buttons.sort_unstable();
+
+            let mut presses = [0u16; 16];
+            for value in &mut presses[..num_buttons] {
+                state = state.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+                *value = ((state >> 16) % 3) as u16;
+            }
+            let mut joltages = vec![0u16; n];
+            for (button_idx, &mask) in buttons.iter().enumerate() {
+                let mut bits = mask;
+                while bits != 0 {
+                    let row = bits.trailing_zeros() as usize;
+                    joltages[row] += presses[button_idx];
+                    bits &= bits - 1;
+                }
+            }
+
+            let machine = Machine {
+                target: 0,
+                buttons,
+                joltages,
+                n,
+            };
+            assert_eq!(solve_joltage(&machine), brute_joltage(&machine));
+        }
+    }
+
+    fn brute_joltage(machine: &Machine) -> u32 {
+        let mut bounds = [0u16; 16];
+        for (button_idx, &mask) in machine.buttons.iter().enumerate() {
+            let mut bits = mask;
+            let mut bound = u16::MAX;
+            while bits != 0 {
+                let row = bits.trailing_zeros() as usize;
+                bound = bound.min(machine.joltages[row]);
+                bits &= bits - 1;
+            }
+            bounds[button_idx] = bound;
+        }
+
+        fn visit(
+            machine: &Machine,
+            bounds: &[u16; 16],
+            values: &mut [u16; 16],
+            idx: usize,
+            partial: u32,
+            best: &mut u32,
+        ) {
+            if partial >= *best {
+                return;
+            }
+            if idx == machine.buttons.len() {
+                let mut counters = [0u16; 16];
+                for (button_idx, &mask) in machine.buttons.iter().enumerate() {
+                    let mut bits = mask;
+                    while bits != 0 {
+                        let row = bits.trailing_zeros() as usize;
+                        counters[row] += values[button_idx];
+                        bits &= bits - 1;
+                    }
+                }
+                if counters[..machine.n] == machine.joltages[..] {
+                    *best = partial;
+                }
+                return;
+            }
+
+            for value in 0..=bounds[idx] {
+                values[idx] = value;
+                visit(
+                    machine,
+                    bounds,
+                    values,
+                    idx + 1,
+                    partial + value as u32,
+                    best,
+                );
+            }
+        }
+
+        let mut values = [0u16; 16];
+        let mut best = u32::MAX;
+        visit(machine, &bounds, &mut values, 0, 0, &mut best);
+        best
     }
 }

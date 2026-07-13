@@ -48,8 +48,7 @@ pub fn solve(day: u8, part: Part, input: &str) -> Result<String, String> {
         (1, Part::One) => day01::part1(input).map(|n| n.to_string()),
         (1, Part::Two) => day01::part2(input).map(|n| n.to_string()),
         (1, Part::Both) => {
-            let p1 = day01::part1(input)?;
-            let p2 = day01::part2(input)?;
+            let (p1, p2) = day01::both(input)?;
             Ok(format!("Part 1: {}\nPart 2: {}", p1, p2))
         }
         (2, Part::One) => day02::part1(input).map(|n| n.to_string()),

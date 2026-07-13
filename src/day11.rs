@@ -27,14 +27,36 @@ pub fn part2(input: &str) -> Result<u64, String> {
 
 pub fn both(input: &str) -> Result<(u64, u64), String> {
     let graph = parse_graph(input)?;
-    let n = graph.adj.len();
-
-    let mut memo = vec![u64::MAX; n];
-    let p1 = count_paths_to(&graph, YOU_ID, OUT_ID, u16::MAX, &mut memo);
-
-    let p2 = count_paths_through_both(&graph);
+    let mut memo = vec![[u64::MAX; 4]; graph.adj.len()];
+    let p1 = categorized_paths(&graph, YOU_ID, &mut memo).iter().sum();
+    let p2 = categorized_paths(&graph, SVR_ID, &mut memo)[3];
 
     Ok((p1, p2))
+}
+
+/// Count paths to `out`, categorized by whether they visit `dac` and `fft`.
+fn categorized_paths(graph: &Graph, node: u16, memo: &mut [[u64; 4]]) -> [u64; 4] {
+    if node == OUT_ID {
+        return [1, 0, 0, 0];
+    }
+
+    let idx = node as usize;
+    if unsafe { memo.get_unchecked(idx)[0] } != u64::MAX {
+        return unsafe { *memo.get_unchecked(idx) };
+    }
+
+    let node_mask = (node == DAC_ID) as usize | (((node == FFT_ID) as usize) << 1);
+    let mut counts = [0u64; 4];
+    for &neighbor in unsafe { graph.adj.get_unchecked(idx) } {
+        let child = categorized_paths(graph, neighbor, memo);
+        counts[node_mask] += child[0];
+        counts[1 | node_mask] += child[1];
+        counts[2 | node_mask] += child[2];
+        counts[3] += child[3];
+    }
+
+    unsafe { *memo.get_unchecked_mut(idx) = counts };
+    counts
 }
 
 fn count_paths_through_both(graph: &Graph) -> u64 {
@@ -86,7 +108,81 @@ fn count_paths_to(graph: &Graph, node: u16, target: u16, forbidden: u16, memo: &
     total
 }
 
+const COMPACT_NAMES: usize = 26 * 26 * 26;
+
 fn parse_graph(input: &str) -> Result<Graph, String> {
+    if let Some(graph) = parse_compact_graph(input) {
+        return Ok(graph);
+    }
+    parse_graph_generic(input)
+}
+
+fn parse_compact_graph(input: &str) -> Option<Graph> {
+    let mut name_to_id = [u16::MAX; COMPACT_NAMES];
+    name_to_id[compact_name("out")?] = OUT_ID;
+    name_to_id[compact_name("you")?] = YOU_ID;
+    name_to_id[compact_name("svr")?] = SVR_ID;
+    name_to_id[compact_name("dac")?] = DAC_ID;
+    name_to_id[compact_name("fft")?] = FFT_ID;
+
+    let mut adj: Vec<Vec<u16>> = (0..5).map(|_| Vec::new()).collect();
+    let mut next_id = 5u16;
+
+    for line in input.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let colon = line.find(':')?;
+        let source_key = compact_name(line[..colon].trim())?;
+        let source_id = compact_id(source_key, &mut name_to_id, &mut adj, &mut next_id);
+
+        let mut targets = Vec::new();
+        for target in line[colon + 1..].split_whitespace() {
+            let key = compact_name(target)?;
+            targets.push(compact_id(key, &mut name_to_id, &mut adj, &mut next_id));
+        }
+        adj[source_id as usize] = targets;
+    }
+
+    Some(Graph { adj })
+}
+
+#[inline(always)]
+fn compact_name(name: &str) -> Option<usize> {
+    let bytes = name.as_bytes();
+    if bytes.len() != 3
+        || !bytes[0].is_ascii_lowercase()
+        || !bytes[1].is_ascii_lowercase()
+        || !bytes[2].is_ascii_lowercase()
+    {
+        return None;
+    }
+    Some(
+        ((bytes[0] - b'a') as usize * 26 + (bytes[1] - b'a') as usize) * 26
+            + (bytes[2] - b'a') as usize,
+    )
+}
+
+#[inline(always)]
+fn compact_id(
+    key: usize,
+    name_to_id: &mut [u16; COMPACT_NAMES],
+    adj: &mut Vec<Vec<u16>>,
+    next_id: &mut u16,
+) -> u16 {
+    let id = unsafe { *name_to_id.get_unchecked(key) };
+    if id != u16::MAX {
+        return id;
+    }
+    let id = *next_id;
+    *next_id += 1;
+    unsafe { *name_to_id.get_unchecked_mut(key) = id };
+    adj.push(Vec::new());
+    id
+}
+
+fn parse_graph_generic(input: &str) -> Result<Graph, String> {
     let mut name_to_id: HashMap<&str, u16> = HashMap::with_capacity(256);
 
     // Pre-assign special IDs

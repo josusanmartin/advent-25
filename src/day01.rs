@@ -129,6 +129,74 @@ pub fn part2(input: &str) -> Result<usize, String> {
     Ok(zero_hits)
 }
 
+/// Solve both parts in one pass over the rotations.
+pub fn both(input: &str) -> Result<(usize, usize), String> {
+    let bytes = input.as_bytes();
+    let len = bytes.len();
+    let mut idx = 0;
+    let mut position: u16 = 50;
+    let mut final_zero_hits = 0usize;
+    let mut all_zero_hits = 0usize;
+
+    while idx < len {
+        while idx < len {
+            let b = unsafe { *bytes.get_unchecked(idx) };
+            if b != b'\n' && b != b'\r' {
+                break;
+            }
+            idx += 1;
+        }
+        if idx >= len {
+            break;
+        }
+
+        let dir = unsafe { *bytes.get_unchecked(idx) };
+        idx += 1;
+
+        let mut distance = 0u64;
+        while idx < len {
+            let b = unsafe { *bytes.get_unchecked(idx) };
+            idx += 1;
+            if b == b'\n' {
+                break;
+            }
+            if b != b'\r' {
+                distance = distance * 10 + (b - b'0') as u64;
+            }
+        }
+
+        let first_hit = if dir == b'R' {
+            if position == 0 {
+                100
+            } else {
+                100 - position as u64
+            }
+        } else if position == 0 {
+            100
+        } else {
+            position as u64
+        };
+        if distance >= first_hit {
+            all_zero_hits += 1 + ((distance - first_hit) / 100) as usize;
+        }
+
+        let dist_mod = (distance % 100) as u16;
+        if dir == b'R' {
+            position += dist_mod;
+            if position >= 100 {
+                position -= 100;
+            }
+        } else if position < dist_mod {
+            position += 100 - dist_mod;
+        } else {
+            position -= dist_mod;
+        }
+        final_zero_hits += (position == 0) as usize;
+    }
+
+    Ok((final_zero_hits, all_zero_hits))
+}
+
 /// Convenience helper that runs part 1 against the bundled puzzle input file.
 pub fn part1_puzzle() -> Result<usize, String> {
     part1(INPUT)

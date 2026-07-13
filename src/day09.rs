@@ -187,13 +187,13 @@ fn build_coverage(points: &[[i32; 2]]) -> Result<Coverage, String> {
     }
 
     // Mark covered cells in a compressed grid.
-    let mut green: Vec<Vec<u8>> = vec![vec![0u8; width]; height];
+    let mut green = vec![0u8; width * height];
     for (y_idx, spans) in merged_spans.iter().enumerate() {
         for &(l, r) in spans {
             let xi_start = lower_bound(&xs, l);
             let xi_end = lower_bound(&xs, r + 1);
             for x_idx in xi_start..xi_end {
-                unsafe { *green.get_unchecked_mut(y_idx).get_unchecked_mut(x_idx) = 1 };
+                unsafe { *green.get_unchecked_mut(y_idx * width + x_idx) = 1 };
             }
         }
     }
@@ -205,10 +205,11 @@ fn build_coverage(points: &[[i32; 2]]) -> Result<Coverage, String> {
             (unsafe { ys.get_unchecked(y_idx + 1) } - unsafe { ys.get_unchecked(y_idx) }) as u64;
         let prev_row = y_idx * stride;
         let cur_row = (y_idx + 1) * stride;
+        let green_row = y_idx * width;
         for x_idx in 0..width {
             let dx = (unsafe { xs.get_unchecked(x_idx + 1) } - unsafe { xs.get_unchecked(x_idx) })
                 as u64;
-            let cell_area = if unsafe { *green.get_unchecked(y_idx).get_unchecked(x_idx) } == 1 {
+            let cell_area = if unsafe { *green.get_unchecked(green_row + x_idx) } == 1 {
                 dx * dy
             } else {
                 0

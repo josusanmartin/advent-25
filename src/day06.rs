@@ -1,5 +1,7 @@
 pub const INPUT: &str = include_str!("../inputs/06.txt");
 
+use std::borrow::Cow;
+
 /// Part 1: evaluate each vertical problem and sum their results.
 pub fn part1(input: &str) -> Result<u128, String> {
     let (p1, _) = both(input)?;
@@ -71,10 +73,10 @@ pub fn both(input: &str) -> Result<(u128, u128), String> {
     Ok((total_row, total_col))
 }
 
-fn parse_lines(input: &str) -> Result<(Vec<Vec<u8>>, usize), String> {
-    let mut lines: Vec<Vec<u8>> = input
+fn parse_lines(input: &str) -> Result<(Vec<Cow<'_, [u8]>>, usize), String> {
+    let mut lines: Vec<Cow<'_, [u8]>> = input
         .lines()
-        .map(|line| line.trim_end_matches('\r').as_bytes().to_vec())
+        .map(|line| Cow::Borrowed(line.trim_end_matches('\r').as_bytes()))
         .collect();
 
     let height = lines.len();
@@ -91,14 +93,16 @@ fn parse_lines(input: &str) -> Result<(Vec<Vec<u8>>, usize), String> {
 
     for line in &mut lines {
         if line.len() < width {
-            line.resize(width, b' ');
+            let mut padded = line.to_vec();
+            padded.resize(width, b' ');
+            *line = Cow::Owned(padded);
         }
     }
 
     Ok((lines, width))
 }
 
-fn find_segments(lines: &[Vec<u8>], width: usize) -> Result<Vec<(usize, usize)>, String> {
+fn find_segments(lines: &[Cow<'_, [u8]>], width: usize) -> Result<Vec<(usize, usize)>, String> {
     let mut blank_cols = vec![true; width];
     for line in lines {
         for col in 0..width {

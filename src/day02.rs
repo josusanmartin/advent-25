@@ -212,24 +212,6 @@ fn decompose_block(block: u64, block_len: usize) -> Option<(usize, usize)> {
     None
 }
 
-/// Check if a number can be represented as some block repeated exactly 2 times.
-#[inline]
-fn has_double_representation(candidate: u128, total_digits: usize) -> bool {
-    if total_digits % 2 != 0 {
-        return false;
-    }
-    let half_len = total_digits / 2;
-    let half_rep_factor = (POW10[total_digits] - 1) / (POW10[half_len] - 1);
-    if candidate % half_rep_factor == 0 {
-        let half_block = candidate / half_rep_factor;
-        let half_block_min = POW10[half_len - 1];
-        let half_block_max = POW10[half_len] - 1;
-        half_block >= half_block_min && half_block <= half_block_max
-    } else {
-        false
-    }
-}
-
 fn sums_for_ranges(ranges: &[(u64, u64)]) -> (u128, u128) {
     let max_end = ranges.iter().map(|&(_, e)| e).max().unwrap();
     let max_digits = digit_len(max_end);
@@ -279,10 +261,7 @@ fn sums_for_ranges(ranges: &[(u64, u64)]) -> (u128, u128) {
                     let s = rep_factor * sum_range(b_lo, b_hi);
                     part2_sum += s;
                     // Part 1: Check for double representation
-                    if repeats == 2 {
-                        part1_sum += s;
-                    } else if total_len % 2 == 0 {
-                        // For 1-digit block repeated even times, always has double repr
+                    if repeats & 1 == 0 {
                         part1_sum += s;
                     }
                 } else {
@@ -293,7 +272,9 @@ fn sums_for_ranges(ranges: &[(u64, u64)]) -> (u128, u128) {
 
                         if is_fundamental {
                             part2_sum += candidate;
-                            if has_double_representation(candidate, total_len) {
+                            // A fundamental block repeated an odd number of times cannot
+                            // split into two equal halves; an even repeat count always can.
+                            if repeats & 1 == 0 {
                                 part1_sum += candidate;
                             }
                         }
