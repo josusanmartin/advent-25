@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0022",
+  "parent": "cand_0021",
+  "parent_hash": "dfa3f4767fd9fa295a52b38766a84cf5016461f6b8aba18b31ba41257a6456c2",
+  "mode": "TUNE",
+  "mechanism_class": "resource transfer / tail reshaping",
+  "duplicate_check": "Bounded retune of cand_0021 from eight effective chunks to four, as predeclared before closing the family.",
+  "hypothesis": "Four local heaps retain enough top-k parallelism while avoiding cand_0021's merge and weak-threshold overhead.",
+  "artifact_paths": ["src/day08.rs"],
+  "raw_log_paths": ["work/raw_logs/cand_0022_screen.txt"],
+  "commands": {"apply_or_build": "cargo test --release day08", "correctness": "cargo test --release day08", "authoritative_metric": "cargo run --release --bin benchmark", "regression_or_adversarial": "Day 8 tests", "fresh_verifier": "saved cand_0020 binary versus cand_0022"},
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "parallel wall nanoseconds", "direction": "lower", "raw_result_path": null},
+  "target_lane_metric": {"part1_parent_user_median_s_for_100": 0.19, "part1_candidate_user_median_s_for_100": 0.38, "both_parent_user_median_s_for_100": 0.35, "both_candidate_user_median_s_for_100": 0.52, "host_load_range": "73.97-75.16"},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "fail_screen", "regression_or_adversarial": "pass", "fresh_verifier": "not_run", "promote": "fail"},
+  "verifier": {"mode": "saved-parent differential", "verdict": "FAIL", "evidence": "Part 1 CPU doubled, total Day 8 CPU rose about 50%, and matched wall medians did not improve.", "limitations": ["Wall timing remained loaded; the CPU regression and lack of wall signal are sufficient to close this family."]},
+  "decision": "REJECT",
+  "learning": "Per-chunk top-k heaps are the wrong primitive at both tested chunk counts; reopen only with a shared strong threshold or a different exact selection route."
+}

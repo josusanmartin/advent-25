@@ -1,0 +1,96 @@
+{
+  "artifact_paths": [],
+  "authoritative_metric": {
+    "direction": null,
+    "raw_result_path": null,
+    "score": null,
+    "unit": null
+  },
+  "breakthrough": {
+    "active_floor": null,
+    "dependency": "",
+    "frontier_row": null,
+    "mechanism": "",
+    "negative_result": false,
+    "resource_trade": "",
+    "slack_left_behind": []
+  },
+  "candidate": "cand_0001",
+  "commands": {
+    "apply_or_build": null,
+    "authoritative_metric": null,
+    "correctness": null,
+    "fresh_verifier": null,
+    "regression_or_adversarial": null
+  },
+  "correctness": null,
+  "created_at": null,
+  "decision": "PENDING",
+  "duplicate_check": null,
+  "escape": {
+    "anti_revisit_rule": null,
+    "aspiration_rule": null,
+    "closed_hill": null,
+    "commitment_budget": null,
+    "controlled_regression_allowed": false,
+    "divergence_probe": null,
+    "escape_operator": null,
+    "feature_cell": null,
+    "hill_id": null,
+    "kill_criterion": null,
+    "mechanism_signal": "",
+    "new_hill": null,
+    "operator_credit_signal": null,
+    "status": "tracking",
+    "stepping_stone_signal": null,
+    "stuck_signal": null
+  },
+  "hypothesis": "",
+  "learning": "",
+  "mechanism_class": "",
+  "mode": null,
+  "parent": null,
+  "parent_hash": null,
+  "phase_owners": [],
+  "promotion_ladder": {
+    "advisory": {
+      "local_screening": "not_run",
+      "profile": "not_run",
+      "style": "not_run"
+    },
+    "apply_or_build": "pending",
+    "authoritative_metric": "pending",
+    "correctness": "pending",
+    "fresh_verifier": "pending",
+    "promote": "pending",
+    "regression_or_adversarial": "pending"
+  },
+  "raw_log_paths": [],
+  "schema_version": 1,
+  "screening": {
+    "calibration": {
+      "false_clean_risk": null,
+      "false_dirty_risk": null,
+      "known_clean_cases": [],
+      "known_dirty_cases": [],
+      "stacked_knob_cases": [],
+      "verdict": null
+    },
+    "promotion_allowed": false,
+    "screen_metric": null
+  },
+  "updated_at": null,
+  "validation_island": {
+    "contract_allowed": false,
+    "full_validation": null,
+    "old_island_invalidated_by": null,
+    "search_space": null,
+    "selector": null
+  },
+  "verifier": {
+    "evidence": "",
+    "limitations": [],
+    "mode": "fresh_environment_when_possible",
+    "verdict": null
+  }
+}

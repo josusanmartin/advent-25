@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0011",
+  "parent": "cand_0010",
+  "parent_hash": "working-tree cand_0010 based on 7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "TUNE",
+  "mechanism_class": "contract specialization / algebraic work deletion",
+  "duplicate_check": "first day-2 candidate; removes divisibility work rather than parser allocation",
+  "hypothesis": "For fundamental blocks, double representation is equivalent to an even repeat count, eliminating hot u128 division/modulo and reducing day 2 by at least 10%.",
+  "artifact_paths": ["src/day02.rs"],
+  "raw_log_paths": [],
+  "commands": {"apply_or_build": "cargo test --release", "correctness": "day02 examples and exact answers", "authoritative_metric": "saved cand_0010 binary A/B", "regression_or_adversarial": "full release tests", "fresh_verifier": "saved-parent differential"},
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "nanoseconds", "direction": "lower", "raw_result_path": null},
+  "target_lane_metric": {"parent_user_cpu_s_for_30000": 0.722, "candidate_user_cpu_s_for_30000": 0.535, "user_cpu_improvement_percent": 25.9, "wall_speedup": 1.64},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "keep_lane_global_pending", "regression_or_adversarial": "pass_exhaustive_1_to_999999", "fresh_verifier": "pass", "promote": "keep_variant"},
+  "verifier": {"mode": "saved-parent differential plus exhaustive brute force", "verdict": "PASS", "evidence": "26 tests, exact puzzle answers, exhaustive range 1..999999, and 10-run differential.", "limitations": ["Clean global score pending."]},
+  "decision": "KEEP VARIANT",
+  "learning": "The even-repeat invariant safely deletes hot u128 division/modulo and cuts day-2 CPU work about 26%."
+}

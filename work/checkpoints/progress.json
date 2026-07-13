@@ -1,0 +1,20 @@
+{
+  "completed_phases": ["contract", "baseline", "candidate", "validation", "handoff"],
+  "completed_shards": [],
+  "current_phase": "handoff",
+  "objective": "Reduce parallel solver-only wall-clock median for all implemented days below 1.00 ms on Apple M3 Max while preserving exact answers",
+  "phase_status": {
+    "baseline": "complete",
+    "candidate": "complete",
+    "contract": "complete",
+    "fresh_verifier": "pass",
+    "handoff": "complete",
+    "measurement": "cand_0023 seven-process median 805000 ns parallel and 2340000 ns sequential",
+    "promotion": "cand_0023 promoted; sub-1ms target achieved",
+    "validation": "complete"
+  },
+  "resume_policy": "skip completed terminal phases; retry failed, blocked, or partial phases",
+  "schema_version": 1,
+  "terminal_results": ["work/candidates/cand_0000.result.json", "work/candidates/cand_0023.result.json"],
+  "updated_at": "2026-07-13T08:55:22Z"
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0004",
+  "parent": "cand_0002",
+  "parent_hash": "working-tree cand_0002 based on 7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "EXPLORE",
+  "mechanism_class": "representation/primitive change",
+  "duplicate_check": "first day-11 parser candidate; isolated from path-count changes",
+  "hypothesis": "A direct 26^3 label table and one-pass adjacency construction, with generic fallback, removes string hashing and the duplicate parse and lowers day 11 by at least 30%.",
+  "artifact_paths": ["src/day11.rs"],
+  "raw_log_paths": ["work/raw_logs/cand_0004_parent_1.txt", "work/raw_logs/cand_0004_parent_2.txt", "work/raw_logs/cand_0004_parent_3.txt", "work/raw_logs/cand_0004_candidate_1.txt", "work/raw_logs/cand_0004_candidate_2.txt", "work/raw_logs/cand_0004_candidate_3.txt"],
+  "commands": {"apply_or_build": "cargo test --release", "correctness": "full tests and exact day-11 answers", "authoritative_metric": "repeated built-in benchmark", "regression_or_adversarial": "generic-name fallback tests plus examples", "fresh_verifier": "saved cand_0002 binary A/B"},
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "nanoseconds", "direction": "lower", "raw_result_path": null},
+  "target_lane_metric": {"saved_binary_speedup": 2.41, "parent_adjacent_medians_us": [585, 542, 720], "candidate_adjacent_medians_us": [244, 268, 307]},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "pass_day_lane_global_pending", "regression_or_adversarial": "pass", "fresh_verifier": "pass", "promote": "pass_day_lane"},
+  "verifier": {"mode": "saved-parent-binary differential", "verdict": "PASS", "evidence": "26 tests, exact answers, 8-run isolated A/B, and three adjacent pairs of the official benchmark executable.", "limitations": ["Global total score withheld because unrelated load exceeded 60."]},
+  "decision": "PROMOTE",
+  "learning": "Direct compact label mapping and one-pass adjacency construction are over 2x faster for day 11; string hashing was the dominant cost."
+}

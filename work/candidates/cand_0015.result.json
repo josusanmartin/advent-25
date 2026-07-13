@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0015",
+  "parent": "cand_0014",
+  "parent_hash": "working-tree cand_0014 based on 7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "TUNE",
+  "mechanism_class": "allocation removal / in-place compaction",
+  "duplicate_check": "different from rejected cand_0003 streaming parser; changes only range merge allocation",
+  "hypothesis": "Compacting sorted day-5 ranges in place removes one 185-element allocation/copy and reduces day 5 by at least 5%.",
+  "artifact_paths": ["src/day05.rs"],
+  "raw_log_paths": [],
+  "commands": {"apply_or_build": "cargo test --release", "correctness": "day05 tests and exact answers", "authoritative_metric": "saved cand_0014 binary A/B", "regression_or_adversarial": "full release tests", "fresh_verifier": "saved-parent differential"},
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "nanoseconds", "direction": "lower", "raw_result_path": null},
+  "target_lane_metric": {"parent_user_cpu_ms_for_10000": 722.0, "candidate_user_cpu_ms_for_10000": 663.2, "user_cpu_improvement_percent": 8.1, "wall_speedup": 1.81},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "keep_lane_global_pending", "regression_or_adversarial": "pass", "fresh_verifier": "pass", "promote": "keep_variant"},
+  "verifier": {"mode": "saved-parent-binary differential", "verdict": "PASS", "evidence": "26 tests, exact answers, 12-run differential.", "limitations": ["Wall speedup amplified by shared-load variance; CPU improvement is 8.1%."]},
+  "decision": "KEEP VARIANT",
+  "learning": "In-place range compaction removes the useful allocation without adding parser work and cuts day-5 CPU 8.1%."
+}

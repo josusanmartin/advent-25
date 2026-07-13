@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0009",
+  "parent": "cand_0008",
+  "parent_hash": "working-tree cand_0008 based on 7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "TUNE",
+  "mechanism_class": "representation/route change",
+  "duplicate_check": "first day-7 candidate; removes row-vector route while retaining generic parser fallback",
+  "hypothesis": "Iterating a validated fixed-stride LF grid directly removes row-vector construction and reduces day 7 by at least 5%.",
+  "artifact_paths": ["src/day07.rs"],
+  "raw_log_paths": [],
+  "commands": {"apply_or_build": "cargo test --release", "correctness": "day07 examples and exact answers", "authoritative_metric": "saved cand_0008 binary A/B", "regression_or_adversarial": "generic parser remains fallback", "fresh_verifier": "saved-parent differential"},
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "nanoseconds", "direction": "lower", "raw_result_path": null},
+  "screening_metric": {"parent_wall_mean_ms_for_5000": 132.7, "candidate_wall_mean_ms_for_5000": 180.1, "parent_user_cpu_ms": 127.6, "candidate_user_cpu_ms": 172.6},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "fail", "regression_or_adversarial": "pass", "fresh_verifier": "not_run", "promote": "fail"},
+  "verifier": {"mode": "saved-parent-binary differential", "verdict": "FAIL", "evidence": "Both wall and user CPU regressed in 10-run A/B.", "limitations": []},
+  "decision": "REJECT",
+  "learning": "The existing parser's one combined scan beats a fixed-stride route with separate validation; row-vector allocation is not the bottleneck."
+}

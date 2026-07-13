@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0005",
+  "parent": "cand_0004",
+  "parent_hash": "working-tree cand_0004 based on 7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "TUNE",
+  "mechanism_class": "work deletion / algebraic fusion",
+  "duplicate_check": "separate from cand_0004 parser representation; changes only path counting in Both",
+  "hypothesis": "One memoized traversal that categorizes each path by dac/fft membership replaces seven target-specific traversals and reduces the remaining day-11 time by at least 10%.",
+  "artifact_paths": ["src/day11.rs"],
+  "raw_log_paths": [],
+  "commands": {"apply_or_build": "cargo test --release", "correctness": "full tests and exact day-11 answers", "authoritative_metric": "saved cand_0004 binary A/B and repeated built-in benchmark when load permits", "regression_or_adversarial": "day11 examples", "fresh_verifier": "saved cand_0004 binary A/B"},
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "nanoseconds", "direction": "lower", "raw_result_path": null},
+  "target_lane_metric": {"parent_user_cpu_ms_for_2000": 302.9, "candidate_user_cpu_ms_for_2000": 255.5, "user_cpu_improvement_percent": 15.7},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "keep_lane_global_pending", "regression_or_adversarial": "pass", "fresh_verifier": "pass_with_noise_limitation", "promote": "keep_variant"},
+  "verifier": {"mode": "saved-parent-binary differential", "verdict": "PASS", "evidence": "26 tests, exact answers, and 10-run saved-parent comparison.", "limitations": ["Wall-time dispersion was severe under unrelated system load; decision uses accumulated user CPU plus structural work deletion pending final clean wall-time run."]},
+  "decision": "KEEP VARIANT",
+  "learning": "One categorized DAG memo removes six target-specific memo buffers/traversals and reduced user CPU about 16%."
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0001",
+  "parent": "cand_0000",
+  "parent_hash": "7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "EXPLORE",
+  "mechanism_class": "work deletion / algebraic fusion",
+  "duplicate_check": "first day-1 candidate; no previous fused parse exists",
+  "hypothesis": "Computing both day-1 counters during one input scan removes the duplicate 16.6 KB parse and reduces day-1 median by at least 15%.",
+  "artifact_paths": ["src/day01.rs", "src/lib.rs"],
+  "raw_log_paths": ["work/raw_logs/cand_0001_clean_1.txt", "work/raw_logs/cand_0001_clean_2.txt", "work/raw_logs/cand_0001_clean_3.txt", "work/raw_logs/cand_0001_clean_4.txt", "work/raw_logs/cand_0001_clean_5.txt"],
+  "commands": {
+    "apply_or_build": "cargo test --release",
+    "correctness": "cargo test --release and embedded answer comparison",
+    "authoritative_metric": "cargo run --release --bin benchmark, repeated",
+    "regression_or_adversarial": "day01 example plus full suite",
+    "fresh_verifier": "clean rebuild/retest and repeated benchmark"
+  },
+  "correctness": "pass",
+  "authoritative_metric": {"score": 4870000, "unit": "nanoseconds (median of five reported per-day-total medians)", "direction": "lower", "raw_result_path": "work/raw_logs/cand_0001_clean_*.txt"},
+  "target_lane_metric": {"day_1_baseline_us": 35, "day_1_candidate_us": 16, "improvement_percent": 54.3},
+  "screening": {"direct_ab_command": "hyperfine --warmup 3 --runs 12 -N 'work/bench_day1 separate 10000' 'work/bench_day1 fused 10000'", "separate_mean_ms": 288.4, "fused_mean_ms": 131.1, "speedup": 2.20, "promotion_allowed": false},
+  "promotion_ladder": {
+    "apply_or_build": "pass",
+    "correctness": "pass",
+    "authoritative_metric": "pass",
+    "regression_or_adversarial": "pass",
+    "fresh_verifier": "pass_with_same_workspace_limitation",
+    "promote": "pass"
+  },
+  "verifier": {"mode": "fresh_process_retest", "verdict": "PASS", "evidence": "26 release tests, exact puzzle answer, five new benchmark processes, and a 12-run direct A/B comparison.", "limitations": ["No separate clean checkout; global cargo fmt check exposes pre-existing formatting differences in untouched modules."]},
+  "decision": "PROMOTE",
+  "learning": "Eliminating the second parse cut day 1 from 35 us to 16 us; direct A/B speedup was 2.20x."
+}

@@ -1,0 +1,80 @@
+^Dp1 pair 1 parent
+real 0.36
+user 0.35
+sys 0.00
+p1 pair 1 candidate
+real 0.65
+user 0.28
+sys 0.00
+both pair 1 parent
+real 0.23
+user 0.43
+sys 0.03
+both pair 1 candidate
+real 0.20
+user 0.37
+sys 0.01
+p1 pair 2 parent
+real 0.35
+user 0.35
+sys 0.00
+p1 pair 2 candidate
+real 0.27
+user 0.27
+sys 0.00
+both pair 2 parent
+real 0.23
+user 0.42
+sys 0.02
+both pair 2 candidate
+real 0.20
+user 0.37
+sys 0.01
+p1 pair 3 parent
+real 0.35
+user 0.34
+sys 0.00
+p1 pair 3 candidate
+real 0.27
+user 0.27
+sys 0.00
+both pair 3 parent
+real 0.23
+user 0.42
+sys 0.03
+both pair 3 candidate
+real 0.22
+user 0.38
+sys 0.02
+p1 pair 4 parent
+real 0.35
+user 0.35
+sys 0.00
+p1 pair 4 candidate
+real 0.27
+user 0.27
+sys 0.00
+both pair 4 parent
+real 0.24
+user 0.43
+sys 0.03
+both pair 4 candidate
+real 0.20
+user 0.37
+sys 0.01
+p1 pair 5 parent
+real 0.36
+user 0.35
+sys 0.00
+p1 pair 5 candidate
+real 0.27
+user 0.27
+sys 0.00
+both pair 5 parent
+real 0.23
+user 0.43
+sys 0.03
+both pair 5 candidate
+real 0.20
+user 0.37
+sys 0.01

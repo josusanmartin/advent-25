@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0021",
+  "parent": "cand_0020",
+  "parent_hash": "679533c7466c384362d3defbc9e958aa78bb484dd474578cbc6ff756ef0df16f",
+  "mode": "EXPLORE",
+  "mechanism_class": "resource transfer / tail reshaping",
+  "duplicate_check": "First inner-parallel top-k Day 8 route; cand_0018 used only two serial branches.",
+  "hypothesis": "Sixteen bounded local top-k heaps shorten the top-k branch below the MST branch without excessive merge cost.",
+  "artifact_paths": ["src/day08.rs"],
+  "raw_log_paths": ["work/raw_logs/cand_0021_screen.txt"],
+  "commands": {
+    "apply_or_build": "cargo test --release",
+    "correctness": "cargo test --release",
+    "authoritative_metric": "cargo run --release --bin benchmark",
+    "regression_or_adversarial": "Day 8 example and puzzle-input tests",
+    "fresh_verifier": "saved cand_0020 hot-benchmark binary versus cand_0021"
+  },
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "parallel wall nanoseconds", "direction": "lower", "raw_result_path": null},
+  "target_lane_metric": {
+    "part1_parent_user_median_s_for_100": 0.19,
+    "part1_candidate_user_median_s_for_100": 0.55,
+    "both_parent_user_median_s_for_100": 0.34,
+    "both_candidate_user_median_s_for_100": 0.70,
+    "host_load_range": "189.05-201.63"
+  },
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "fail_screen", "regression_or_adversarial": "pass", "fresh_verifier": "not_run", "promote": "fail"},
+  "verifier": {"mode": "saved-parent differential", "verdict": "FAIL", "evidence": "Part 1 CPU nearly tripled and loaded-host wall time regressed.", "limitations": ["Wall samples were loaded, but the CPU-work regression is decisive for this chunk count."]},
+  "decision": "REJECT",
+  "learning": "Sixteen local 1000-edge heaps create too much weak-threshold heap work and merging; bracket a four-chunk version once, then close inner-parallel top-k if it still loses."
+}

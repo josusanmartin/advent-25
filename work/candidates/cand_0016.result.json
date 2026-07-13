@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0016",
+  "parent": "cand_0015",
+  "parent_hash": "working-tree cand_0015 based on 7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "EXPLORE",
+  "mechanism_class": "sparse representation / work deletion",
+  "duplicate_check": "off-hill from rejected cand_0009 parser route; changes simulation frontier only",
+  "hypothesis": "Tracking active beam columns (43.7 average of 141) deletes about 69% of zero-column scans and reduces day 7 by at least 10%.",
+  "artifact_paths": ["src/day07.rs"],
+  "raw_log_paths": [],
+  "commands": {"apply_or_build": "cargo test --release", "correctness": "day07 tests and exact answers", "authoritative_metric": "saved cand_0015 binary A/B", "regression_or_adversarial": "full release tests", "fresh_verifier": "saved-parent differential"},
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "nanoseconds", "direction": "lower", "raw_result_path": null},
+  "target_lane_metric": {"parent_user_cpu_ms_for_10000": 506.7, "candidate_user_cpu_ms_for_10000": 404.8, "user_cpu_improvement_percent": 20.1, "wall_speedup": 1.33},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "keep_lane_global_pending", "regression_or_adversarial": "pass", "fresh_verifier": "pass", "promote": "keep_variant"},
+  "verifier": {"mode": "saved-parent-binary differential", "verdict": "PASS", "evidence": "26 tests, exact answers, 12-run differential.", "limitations": ["Clean global score pending."]},
+  "decision": "KEEP VARIANT",
+  "learning": "Measured sparsity translated to a 20.1% CPU reduction by deleting zero-column scans."
+}

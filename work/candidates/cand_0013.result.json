@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0013",
+  "parent": "cand_0012",
+  "parent_hash": "working-tree cand_0012 based on 7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "EXPLORE",
+  "mechanism_class": "representation change / work deletion",
+  "duplicate_check": "off-hill from rejected cand_0007; changes coverage construction rather than pair scanning",
+  "hypothesis": "Building prefix rows directly from interval deltas deletes merged-span and green-grid materialization and reduces day 9 by at least 15%.",
+  "artifact_paths": ["src/day09.rs"],
+  "raw_log_paths": [],
+  "commands": {"apply_or_build": "cargo test --release", "correctness": "day09 tests and exact answers", "authoritative_metric": "saved cand_0012 binary A/B", "regression_or_adversarial": "full release tests", "fresh_verifier": "saved-parent differential"},
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "nanoseconds", "direction": "lower", "raw_result_path": null},
+  "screening_metric": {"parent_user_cpu_s_for_500": 1.040, "candidate_user_cpu_s_for_500": 1.078, "parent_wall_mean_s": 1.981, "candidate_wall_mean_s": 2.160},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "fail", "regression_or_adversarial": "pass", "fresh_verifier": "not_run", "promote": "fail"},
+  "verifier": {"mode": "saved-parent-binary differential", "verdict": "FAIL", "evidence": "User CPU and wall time both regressed.", "limitations": []},
+  "decision": "REJECT",
+  "learning": "Interval-delta rows introduce a serial active-count dependency and extra searches; the existing byte grid is faster."
+}

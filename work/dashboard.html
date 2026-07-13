@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <title>Advent 2025 Parallel Solver Optimization</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f2;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #697386;
+      --line: #ded8cc;
+      --green: #188a50;
+      --blue: #2563eb;
+      --red: #c2410c;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 24px 28px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 18px 18px 36px;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .card, .chart, .table-wrap {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .card {
+      padding: 12px 14px;
+    }
+    .card-label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .card-value {
+      font-size: 23px;
+      line-height: 1.15;
+      margin-top: 5px;
+      font-weight: 700;
+    }
+    .card-sub {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .chart {
+      overflow-x: auto;
+      padding: 10px;
+      margin-bottom: 16px;
+    }
+    .chart svg {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .table-wrap {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #eee9df;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+    td:last-child, th:last-child {
+      white-space: normal;
+      min-width: 220px;
+    }
+    th {
+      color: var(--muted);
+      font-weight: 650;
+      background: #fbfaf7;
+    }
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: #ece7dc;
+      color: var(--ink);
+      font-size: 12px;
+    }
+    .promote, .promoted, .keep, .kept, .baseline {
+      background: #dff3e8;
+      color: var(--green);
+    }
+    .bug, .crash, .blocked {
+      background: #ffedd5;
+      color: var(--red);
+    }
+    footer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    footer a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Advent 2025 Parallel Solver Optimization</h1>
+    <div class="meta">Source: work/progress.tsv | latest event: cand_0023 | x-axis: candidate</div>
+  </header>
+  <main>
+    <div class="cards">
+      
+        <section class="card">
+          <div class="card-label">Best</div>
+          <div class="card-value">805,000</div>
+          <div class="card-sub">cand_0023</div>
+        </section>
+        
+
+        <section class="card">
+          <div class="card-label">Latest</div>
+          <div class="card-value">cand_0023</div>
+          <div class="card-sub">promote</div>
+        </section>
+        
+
+        <section class="card">
+          <div class="card-label">Candidates</div>
+          <div class="card-value">24</div>
+          <div class="card-sub">4 promoted / 6 rejected</div>
+        </section>
+        
+
+        <section class="card">
+          <div class="card-label">Tokens</div>
+          <div class="card-value">n/a</div>
+          <div class="card-sub">since promotion n/a</div>
+        </section>
+        
+
+        <section class="card">
+          <div class="card-label">Active Time</div>
+          <div class="card-value">n/a</div>
+          <div class="card-sub">tracked agent time</div>
+        </section>
+        
+
+        <section class="card">
+          <div class="card-label">Wall Time</div>
+          <div class="card-value">72.75h</div>
+          <div class="card-sub">elapsed from first snapshot/event</div>
+        </section>
+        
+
+        <section class="card">
+          <div class="card-label">Bugs/Blocked</div>
+          <div class="card-value">0</div>
+          <div class="card-sub">none</div>
+        </section>
+        
+    </div>
+    <section class="chart"><svg xmlns="http://www.w3.org/2000/svg" width="1120" height="720" viewBox="0 0 1120 720" role="img" aria-labelledby="title desc">
+<title id="title">Advent 2025 Parallel Solver Optimization With Token Usage</title>
+<desc id="desc">Optimization timeline displayed from Candidate 3 through Candidate 23. Protected best is 805,000 Parallel wall median (ns). Token usage source: explicit get_goal snapshots.</desc>
+<rect width="1120" height="720" fill="#ffffff"/>
+<text x="92.0" y="30" font-family="Arial, sans-serif" font-size="20" fill="#111827" text-anchor="start" font-weight="700">Advent 2025 Parallel Solver Optimization With Tokens</text>
+<text x="1035.0" y="30" font-family="Arial, sans-serif" font-size="12" fill="#4b5563" text-anchor="end">displayed candidates 3-23</text>
+<text x="1035.0" y="48" font-family="Arial, sans-serif" font-size="12" fill="#92400e" text-anchor="end" font-weight="700">current usage snapshot: n/a</text>
+<rect x="92.0" y="72.0" width="943.0" height="318.0" fill="#f9fafb" stroke="#e5e7eb"/>
+<line x1="92.0" y1="347.1" x2="1035.0" y2="347.1" stroke="#e5e7eb" stroke-width="1"/>
+<text x="82.0" y="351.1" font-family="Arial, sans-serif" font-size="11" fill="#6b7280" text-anchor="end">1.00M</text>
+<line x1="92.0" y1="316.2" x2="1035.0" y2="316.2" stroke="#e5e7eb" stroke-width="1"/>
+<text x="82.0" y="320.2" font-family="Arial, sans-serif" font-size="11" fill="#6b7280" text-anchor="end">1.20M</text>
+<line x1="92.0" y1="278.3" x2="1035.0" y2="278.3" stroke="#e5e7eb" stroke-width="1"/>
+<text x="82.0" y="282.3" font-family="Arial, sans-serif" font-size="11" fill="#6b7280" text-anchor="end">1.50M</text>
+<line x1="92.0" y1="191.6" x2="1035.0" y2="191.6" stroke="#e5e7eb" stroke-width="1"/>
+<text x="82.0" y="195.6" font-family="Arial, sans-serif" font-size="11" fill="#6b7280" text-anchor="end">2.50M</text>
+<line x1="92.0" y1="111.8" x2="1035.0" y2="111.8" stroke="#e5e7eb" stroke-width="1"/>
+<text x="82.0" y="115.8" font-family="Arial, sans-serif" font-size="11" fill="#6b7280" text-anchor="end">4.00M</text>
+<line x1="92.0" y1="347.1" x2="1035.0" y2="347.1" stroke="#dc2626" stroke-width="1.3" stroke-dasharray="5 5"/>
+<text x="82.0" y="351.1" font-family="Arial, sans-serif" font-size="11" fill="#b91c1c" text-anchor="end">target &lt;1.00M</text>
+<line x1="92.0" y1="390.0" x2="92.0" y2="396.0" stroke="#9ca3af" stroke-width="1"/>
+<text x="92.0" y="412.0" font-family="Arial, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">3</text>
+<line x1="233.4" y1="390.0" x2="233.4" y2="396.0" stroke="#9ca3af" stroke-width="1"/>
+<text x="233.4" y="412.0" font-family="Arial, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">6</text>
+<line x1="374.9" y1="390.0" x2="374.9" y2="396.0" stroke="#9ca3af" stroke-width="1"/>
+<text x="374.9" y="412.0" font-family="Arial, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">9</text>
+<line x1="516.4" y1="390.0" x2="516.4" y2="396.0" stroke="#9ca3af" stroke-width="1"/>
+<text x="516.4" y="412.0" font-family="Arial, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">12</text>
+<line x1="657.8" y1="390.0" x2="657.8" y2="396.0" stroke="#9ca3af" stroke-width="1"/>
+<text x="657.8" y="412.0" font-family="Arial, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">15</text>
+<line x1="799.2" y1="390.0" x2="799.2" y2="396.0" stroke="#9ca3af" stroke-width="1"/>
+<text x="799.2" y="412.0" font-family="Arial, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">18</text>
+<line x1="940.7" y1="390.0" x2="940.7" y2="396.0" stroke="#9ca3af" stroke-width="1"/>
+<text x="940.7" y="412.0" font-family="Arial, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">21</text>
+<line x1="1035.0" y1="390.0" x2="1035.0" y2="396.0" stroke="#9ca3af" stroke-width="1"/>
+<text x="1035.0" y="412.0" font-family="Arial, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">23</text>
+<text x="563.5" y="432.0" font-family="Arial, sans-serif" font-size="12" fill="#4b5563" text-anchor="middle">Candidate number (3 early candidates hidden)</text>
+<text x="22" y="231.0" font-family="Arial, sans-serif" font-size="12" fill="#4b5563" text-anchor="middle" transform="rotate(-90 22 231.0)">Parallel wall median (ns), log scale</text>
+<polyline points="92.0,79.5 139.2,79.5 186.3,79.5 233.4,79.5 280.6,79.5 327.8,79.5 374.9,79.5 422.0,79.5 469.2,79.5 516.4,79.5 563.5,79.5 610.7,79.5 657.8,79.5 705.0,79.5 752.1,79.5 799.2,79.5 846.4,79.5 893.5,79.5 940.7,79.5 987.8,79.5 1035.0,384.0" fill="none" stroke="#2563eb" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round" />
+<circle cx="1035.0" cy="384.0" r="3.2" fill="#059669"><title>cand_0023: promote - 805,000 Parallel wall median (ns) - Day 8 shared exact threshold; verified 0.805ms parallel median</title></circle>
+<text x="1031.0" y="374.0" font-family="Arial, sans-serif" font-size="12" fill="#065f46" text-anchor="end" font-weight="700">protected best: 805,000 Parallel wall median (ns)</text>
+<text x="100.0" y="90.0" font-family="Arial, sans-serif" font-size="11" fill="#6b7280" text-anchor="start">Candidates 0-2 hidden for scale</text>
+<text x="92.0" y="447" font-family="Arial, sans-serif" font-size="16" fill="#111827" text-anchor="start" font-weight="700">Recorded Token Usage</text>
+<text x="1035.0" y="447" font-family="Arial, sans-serif" font-size="12" fill="#4b5563" text-anchor="end">x-axis is elapsed wall time from explicit get_goal snapshots</text>
+<rect x="92.0" y="475.0" width="943.0" height="165.0" fill="#fffbeb" stroke="#fde68a"/>
+<rect x="92.0" y="475.0" width="943.0" height="165.0" fill="#f3f4f6" opacity="0.65"/>
+<text x="563.5" y="557.5" font-family="Arial, sans-serif" font-size="13" fill="#6b7280" text-anchor="middle">no explicit get_goal snapshots or legacy token columns</text>
+<line x1="92.0" y1="640.0" x2="1035.0" y2="640.0" stroke="#fde68a" stroke-width="1"/>
+<text x="82.0" y="644.0" font-family="Arial, sans-serif" font-size="11" fill="#92400e" text-anchor="end">0</text>
+<line x1="92.0" y1="607.0" x2="1035.0" y2="607.0" stroke="#fde68a" stroke-width="1"/>
+<text x="82.0" y="611.0" font-family="Arial, sans-serif" font-size="11" fill="#92400e" text-anchor="end">0</text>
+<line x1="92.0" y1="574.0" x2="1035.0" y2="574.0" stroke="#fde68a" stroke-width="1"/>
+<text x="82.0" y="578.0" font-family="Arial, sans-serif" font-size="11" fill="#92400e" text-anchor="end">0</text>
+<line x1="92.0" y1="541.0" x2="1035.0" y2="541.0" stroke="#fde68a" stroke-width="1"/>
+<text x="82.0" y="545.0" font-family="Arial, sans-serif" font-size="11" fill="#92400e" text-anchor="end">1</text>
+<line x1="92.0" y1="508.0" x2="1035.0" y2="508.0" stroke="#fde68a" stroke-width="1"/>
+<text x="82.0" y="512.0" font-family="Arial, sans-serif" font-size="11" fill="#92400e" text-anchor="end">1</text>
+<line x1="92.0" y1="475.0" x2="1035.0" y2="475.0" stroke="#fde68a" stroke-width="1"/>
+<text x="82.0" y="479.0" font-family="Arial, sans-serif" font-size="11" fill="#92400e" text-anchor="end">1</text>
+<line x1="92.0" y1="640.0" x2="92.0" y2="646.0" stroke="#d97706" stroke-width="1"/>
+<text x="92.0" y="662.0" font-family="Arial, sans-serif" font-size="11" fill="#92400e" text-anchor="middle">0s</text>
+<line x1="1035.0" y1="640.0" x2="1035.0" y2="646.0" stroke="#d97706" stroke-width="1"/>
+<text x="1035.0" y="662.0" font-family="Arial, sans-serif" font-size="11" fill="#92400e" text-anchor="middle">1s</text>
+<text x="563.5" y="684.0" font-family="Arial, sans-serif" font-size="12" fill="#4b5563" text-anchor="middle">Elapsed wall time from recorded run snapshots</text>
+<text x="22" y="557.5" font-family="Arial, sans-serif" font-size="12" fill="#92400e" text-anchor="middle" transform="rotate(-90 22 557.5)">Cumulative tokens</text>
+<line x1="92.0" y1="692.0" x2="110.0" y2="692.0" stroke="#2563eb" stroke-width="3"/>
+<text x="116.0" y="696.0" font-family="Arial, sans-serif" font-size="11" fill="#374151" text-anchor="start">best score</text>
+<line x1="237.0" y1="692.0" x2="255.0" y2="692.0" stroke="#9ca3af" stroke-width="3"/>
+<text x="261.0" y="696.0" font-family="Arial, sans-serif" font-size="11" fill="#374151" text-anchor="start">measured score</text>
+<line x1="382.0" y1="692.0" x2="400.0" y2="692.0" stroke="#059669" stroke-width="3"/>
+<text x="406.0" y="696.0" font-family="Arial, sans-serif" font-size="11" fill="#374151" text-anchor="start">promoted</text>
+<line x1="527.0" y1="692.0" x2="545.0" y2="692.0" stroke="#f59e0b" stroke-width="3"/>
+<text x="551.0" y="696.0" font-family="Arial, sans-serif" font-size="11" fill="#374151" text-anchor="start">kept/tokens</text>
+<line x1="672.0" y1="692.0" x2="690.0" y2="692.0" stroke="#dc2626" stroke-width="3"/>
+<text x="696.0" y="696.0" font-family="Arial, sans-serif" font-size="11" fill="#374151" text-anchor="start">reject/fail</text>
+<text x="1035.0" y="696.0" font-family="Arial, sans-serif" font-size="10" fill="#6b7280" text-anchor="end">generated 2026-07-13T08:55:22Z</text>
+<a href="https://github.com/josusanmartin/problem-agnostic-optimization-skill" target="_blank" rel="noopener noreferrer"><text x="92.0" y="714" font-family="Arial, sans-serif" font-size="10" fill="#2563eb" text-anchor="start">https://github.com/josusanmartin/problem-agnostic-optimization-skill</text></a>
+</svg></section>
+    <section class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Candidate</th><th>Decision</th><th>Score</th><th>Tokens</th><th>Active</th><th>Wall</th><th>Label</th></tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td>0</td>
+          <td>cand_0000</td>
+          <td><span class="pill baseline">baseline</span></td>
+          <td>5,090,000</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>0s</td>
+          <td>7-run median baseline; per-day guardrails captured</td>
+        </tr>
+        
+
+        <tr>
+          <td>1</td>
+          <td>cand_0001</td>
+          <td><span class="pill promote">promote</span></td>
+          <td>4,870,000</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>16.50m</td>
+          <td>day 1 fused both-parts scan; 35us to 16us</td>
+        </tr>
+        
+
+        <tr>
+          <td>2</td>
+          <td>cand_0002</td>
+          <td><span class="pill promote">promote</span></td>
+          <td>4,840,000</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>19.00m</td>
+          <td>day 3 removed second monotonic stack; 124us to 114us</td>
+        </tr>
+        
+
+        <tr>
+          <td>3</td>
+          <td>cand_0003</td>
+          <td><span class="pill discard">discard</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>22.27m</td>
+          <td>day 5 streamed IDs; differential screen tied/regressed</td>
+        </tr>
+        
+
+        <tr>
+          <td>4</td>
+          <td>cand_0004</td>
+          <td><span class="pill keep">keep</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>27.43m</td>
+          <td>day 11 compact parser; 2.41x saved-binary speedup; global run contaminated</td>
+        </tr>
+        
+
+        <tr>
+          <td>5</td>
+          <td>cand_0005</td>
+          <td><span class="pill keep">keep</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>29.52m</td>
+          <td>day 11 fused categorized path DP; ~16% user-CPU reduction; global load noisy</td>
+        </tr>
+        
+
+        <tr>
+          <td>6</td>
+          <td>cand_0006</td>
+          <td><span class="pill keep">keep</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>32.95m</td>
+          <td>day 12 stream regions; 41% user-CPU reduction; wall load noisy</td>
+        </tr>
+        
+
+        <tr>
+          <td>7</td>
+          <td>cand_0007</td>
+          <td><span class="pill discard">discard</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>36.25m</td>
+          <td>day 9 pair-loop fusion; user CPU flat, wall regressed</td>
+        </tr>
+        
+
+        <tr>
+          <td>8</td>
+          <td>cand_0008</td>
+          <td><span class="pill keep">keep</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>38.92m</td>
+          <td>day 6 borrow equal-width rows; 10.2% user-CPU reduction</td>
+        </tr>
+        
+
+        <tr>
+          <td>9</td>
+          <td>cand_0009</td>
+          <td><span class="pill discard">discard</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>41.17m</td>
+          <td>day 7 fixed-stride route; 36% regression</td>
+        </tr>
+        
+
+        <tr>
+          <td>10</td>
+          <td>cand_0010</td>
+          <td><span class="pill keep">keep</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>45.08m</td>
+          <td>day 4 padded grid; 12.5% user-CPU reduction</td>
+        </tr>
+        
+
+        <tr>
+          <td>11</td>
+          <td>cand_0011</td>
+          <td><span class="pill keep">keep</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>48.82m</td>
+          <td>day 2 even-repeat invariant; 26% user-CPU reduction; exhaustive verifier pass</td>
+        </tr>
+        
+
+        <tr>
+          <td>12</td>
+          <td>cand_0012</td>
+          <td><span class="pill keep">keep</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>51.97m</td>
+          <td>day 8 dense Prim frontier; 26.6% user-CPU reduction</td>
+        </tr>
+        
+
+        <tr>
+          <td>13</td>
+          <td>cand_0013</td>
+          <td><span class="pill discard">discard</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>55.30m</td>
+          <td>day 9 interval-delta prefix; CPU and wall regressed</td>
+        </tr>
+        
+
+        <tr>
+          <td>14</td>
+          <td>cand_0014</td>
+          <td><span class="pill keep">keep</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>1.05h</td>
+          <td>day 10 proven lower-bound exit; 1.25x multithreaded wall speedup</td>
+        </tr>
+        
+
+        <tr>
+          <td>15</td>
+          <td>cand_0015</td>
+          <td><span class="pill keep">keep</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>1.10h</td>
+          <td>day 5 in-place range merge; 8.1% user-CPU reduction</td>
+        </tr>
+        
+
+        <tr>
+          <td>16</td>
+          <td>cand_0016</td>
+          <td><span class="pill keep">keep</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>1.14h</td>
+          <td>day 7 sparse active frontier; 20.1% user-CPU reduction</td>
+        </tr>
+        
+
+        <tr>
+          <td>17</td>
+          <td>cand_0017</td>
+          <td><span class="pill keep">keep</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>1.25h</td>
+          <td>day 9 flat green grid; 15.5% user-CPU reduction</td>
+        </tr>
+        
+
+        <tr>
+          <td>18</td>
+          <td>cand_0018</td>
+          <td><span class="pill keep">keep</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>2.79h</td>
+          <td>Day 8 MST/top-k split; component signal, clean parallel wall pending</td>
+        </tr>
+        
+
+        <tr>
+          <td>19</td>
+          <td>cand_0019</td>
+          <td><span class="pill keep">keep</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>3.04h</td>
+          <td>Day 10 monotone first-feasible search; safe but CPU tie</td>
+        </tr>
+        
+
+        <tr>
+          <td>20</td>
+          <td>cand_0020</td>
+          <td><span class="pill keep">keep</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>3.09h</td>
+          <td>Day 10 exact feasible interval; 4.7-5.0x CPU lane win</td>
+        </tr>
+        
+
+        <tr>
+          <td>21</td>
+          <td>cand_0021</td>
+          <td><span class="pill discard">discard</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>3.14h</td>
+          <td>Day 8 16-chunk top-k; CPU and wall regression</td>
+        </tr>
+        
+
+        <tr>
+          <td>22</td>
+          <td>cand_0022</td>
+          <td><span class="pill discard">discard</span></td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>3.17h</td>
+          <td>Day 8 four-chunk top-k; family closed</td>
+        </tr>
+        
+
+        <tr>
+          <td>23</td>
+          <td>cand_0023</td>
+          <td><span class="pill promote">promote</span></td>
+          <td>805,000</td>
+          <td>n/a</td>
+          <td>n/a</td>
+          <td>72.75h</td>
+          <td>Day 8 shared exact threshold; verified 0.805ms parallel median</td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+    <footer>Regenerate this file after new events, or run the dashboard server with SSH port forwarding for live remote review: ssh -L 8765:127.0.0.1:8765 &lt;user&gt;@&lt;remote-host&gt;. Built with <a href="https://github.com/josusanmartin/problem-agnostic-optimization-skill" target="_blank" rel="noopener noreferrer">https://github.com/josusanmartin/problem-agnostic-optimization-skill</a>.</footer>
+  </main>
+</body>
+</html>

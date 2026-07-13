@@ -1,0 +1,50 @@
+^D13:10  up 5 days,  3:30, 6 users, load averages: 21.97 23.06 46.34
+threads 1 pair 1 parent
+real 0.45
+user 0.44
+sys 0.00
+threads 1 pair 1 candidate
+real 0.71
+user 0.70
+sys 0.00
+threads 1 pair 2 parent
+real 1.73
+user 1.17
+sys 0.04
+threads 1 pair 2 candidate
+real 5.02
+user 1.07
+sys 0.04
+threads 1 pair 3 parent
+real 4.31
+user 1.07
+sys 0.04
+threads 1 pair 3 candidate
+real 5.86
+user 1.09
+sys 0.04
+threads 12 pair 1 parent
+real 4.07
+user 1.14
+sys 0.10
+threads 12 pair 1 candidate
+real 4.47
+user 1.12
+sys 0.11
+threads 12 pair 2 parent
+real 4.25
+user 1.13
+sys 0.11
+threads 12 pair 2 candidate
+real 4.25
+user 1.15
+sys 0.12
+threads 12 pair 3 parent
+real 4.50
+user 1.14
+sys 0.12
+threads 12 pair 3 candidate
+real 4.68
+user 1.11
+sys 0.11
+13:11  up 5 days,  3:30, 6 users, load averages: 78.46 36.67 50.08

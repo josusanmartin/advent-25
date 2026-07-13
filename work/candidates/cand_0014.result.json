@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0014",
+  "parent": "cand_0012",
+  "parent_hash": "working-tree cand_0012 based on 7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "TUNE",
+  "mechanism_class": "work deletion / proven lower-bound exit",
+  "duplicate_check": "first day-10 candidate; profile-guided early termination rather than enumeration ordering",
+  "hypothesis": "Returning when a feasible cost equals max(joltages), a hard lower bound, deletes remaining free-variable enumeration and reduces day 10 by at least 10%.",
+  "artifact_paths": ["src/day10.rs"],
+  "raw_log_paths": ["work/profiles/day10_cand0012.json.gz"],
+  "commands": {"apply_or_build": "cargo test --release", "correctness": "day10 tests and exact answers", "authoritative_metric": "saved cand_0012 binary A/B", "regression_or_adversarial": "full release tests", "fresh_verifier": "saved-parent differential"},
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "nanoseconds", "direction": "lower", "raw_result_path": null},
+  "target_lane_metric": {"multithreaded_wall_speedup": 1.25, "single_thread_parent_user_s_for_1000": 3.353, "single_thread_candidate_user_s_for_1000": 3.180, "single_thread_user_improvement_percent": 5.2},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "keep_lane_global_pending", "regression_or_adversarial": "pass", "fresh_verifier": "pass", "promote": "keep_variant"},
+  "verifier": {"mode": "saved-parent differential, multithreaded and one-thread", "verdict": "PASS", "evidence": "26 tests, exact answers, 10-run multithreaded and one-thread comparisons.", "limitations": ["Clean full-suite score pending."]},
+  "decision": "KEEP VARIANT",
+  "learning": "The hard max-joltage lower bound permits early optimal exits; it saves 5.2% CPU work and improves multithreaded wall time 1.25x."
+}

@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0002",
+  "parent": "cand_0001",
+  "parent_hash": "working-tree cand_0001 based on 7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "TUNE",
+  "mechanism_class": "work deletion / representation change",
+  "duplicate_check": "first day-3 candidate; replaces an entire second stack rather than tuning the existing stack",
+  "hypothesis": "Tracking the best two-digit subsequence in constant state while maintaining only the 12-digit stack removes duplicate per-byte stack work and lowers day 3 by at least 15%.",
+  "artifact_paths": ["src/day03.rs"],
+  "raw_log_paths": ["work/raw_logs/cand_0002_1.txt", "work/raw_logs/cand_0002_2.txt", "work/raw_logs/cand_0002_3.txt", "work/raw_logs/cand_0002_4.txt", "work/raw_logs/cand_0002_5.txt"],
+  "commands": {
+    "apply_or_build": "cargo test --release",
+    "correctness": "cargo test --release and exact day-3 puzzle answer",
+    "authoritative_metric": "repeated cargo run --release --bin benchmark",
+    "regression_or_adversarial": "day03 examples and full suite",
+    "fresh_verifier": "fresh process A/B against saved cand_0001 binary"
+  },
+  "correctness": "pass",
+  "authoritative_metric": {"score": 4840000, "unit": "nanoseconds (median of five reported per-day-total medians)", "direction": "lower", "raw_result_path": "work/raw_logs/cand_0002_*.txt"},
+  "target_lane_metric": {"day_3_parent_us": 124, "day_3_candidate_us": 114, "authoritative_improvement_percent": 8.1, "saved_binary_speedup": 1.14},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "pass", "regression_or_adversarial": "pass", "fresh_verifier": "pass", "promote": "pass"},
+  "verifier": {"mode": "saved-parent-binary differential plus fresh processes", "verdict": "PASS", "evidence": "26 release tests, exact puzzle answers, 10-run saved-binary A/B, and five authoritative processes.", "limitations": []},
+  "decision": "PROMOTE",
+  "learning": "Constant-state part 1 is 1.14x faster in the isolated Both path and removes one stack without complicating part 2."
+}

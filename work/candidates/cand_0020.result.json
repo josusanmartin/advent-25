@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0020",
+  "parent": "cand_0019",
+  "parent_hash": "a170f1942d390f0f0d2f476256d3c852a9f81247bf03742b8d64810e3f5e4d50",
+  "mode": "TUNE",
+  "mechanism_class": "work deletion / constraint propagation",
+  "duplicate_check": "Refines cand_0019's characterized no-signal hill by deleting infeasible inner scans before enumeration; no earlier candidate propagated pivot box constraints.",
+  "hypothesis": "Intersecting every pivot variable's exact box constraint yields a tight admissible interval for the final free variable and eliminates the infeasible scans owning machine 167's tail.",
+  "artifact_paths": ["src/day10.rs"],
+  "raw_log_paths": ["work/raw_logs/cand_0020_screen.txt"],
+  "commands": {
+    "apply_or_build": "cargo test --release",
+    "correctness": "cargo test --release; exact all-days answer-file comparison",
+    "authoritative_metric": "cargo run --release --bin benchmark (clean host required)",
+    "regression_or_adversarial": "128 generated feasible systems compared with direct brute force",
+    "fresh_verifier": "saved cand_0018 hot-benchmark binary versus cand_0020"
+  },
+  "correctness": "pass",
+  "authoritative_metric": {
+    "score": null,
+    "unit": "parallel wall nanoseconds",
+    "direction": "lower",
+    "raw_result_path": null
+  },
+  "target_lane_metric": {
+    "one_thread_parent_user_median_s_for_100": 0.55,
+    "one_thread_candidate_user_median_s_for_100": 0.11,
+    "one_thread_speedup": 5.0,
+    "twelve_thread_parent_user_median_s_for_100": 0.56,
+    "twelve_thread_candidate_user_median_s_for_100": 0.12,
+    "twelve_thread_speedup": 4.67,
+    "host_load_range": "154.44-155.17"
+  },
+  "promotion_ladder": {
+    "apply_or_build": "pass",
+    "correctness": "pass",
+    "authoritative_metric": "pass_target_lane_global_pending_clean_host",
+    "regression_or_adversarial": "pass",
+    "fresh_verifier": "pass",
+    "promote": "keep_target_lane"
+  },
+  "verifier": {
+    "mode": "saved-parent differential plus generated brute-force oracle",
+    "verdict": "PASS",
+    "evidence": "Day 10 user CPU improved 4.7-5.0x, all 27 tests passed, 128 generated systems matched brute force, and exact puzzle answers were unchanged.",
+    "limitations": ["Whole-suite parallel wall promotion still requires a quiet host."]
+  },
+  "decision": "KEEP VARIANT",
+  "learning": "Exact constraint propagation removes the dominant infeasible search and makes Day 10 unlikely to remain a parallel-tail binder."
+}

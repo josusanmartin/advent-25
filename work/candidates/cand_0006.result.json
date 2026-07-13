@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0006",
+  "parent": "cand_0005",
+  "parent_hash": "working-tree cand_0005 based on 7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "EXPLORE",
+  "mechanism_class": "work deletion / allocation removal",
+  "duplicate_check": "first day-12 candidate; changes region materialization, not packing search",
+  "hypothesis": "Evaluating 1,000 regions during parsing with one reused count buffer removes 1,000 Vec allocations and lowers day 12 by at least 25%.",
+  "artifact_paths": ["src/day12.rs"],
+  "raw_log_paths": [],
+  "commands": {"apply_or_build": "cargo test --release", "correctness": "day12 example and exact puzzle answer", "authoritative_metric": "saved cand_0005 binary A/B and built-in benchmark", "regression_or_adversarial": "full release tests", "fresh_verifier": "saved-parent differential"},
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "nanoseconds", "direction": "lower", "raw_result_path": null},
+  "target_lane_metric": {"parent_user_cpu_s_for_2000": 0.846, "candidate_user_cpu_s_for_2000": 0.502, "user_cpu_improvement_percent": 40.7},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "keep_lane_global_pending", "regression_or_adversarial": "pass", "fresh_verifier": "pass_with_noise_limitation", "promote": "keep_variant"},
+  "verifier": {"mode": "saved-parent-binary differential", "verdict": "PASS", "evidence": "26 tests, exact answer, and 10-run saved-parent comparison.", "limitations": ["Wall time was scheduler-dominated; final clean wall verification pending."]},
+  "decision": "KEEP VARIANT",
+  "learning": "Reusing one count buffer and evaluating regions immediately removes 1,000 allocations and cuts day-12 CPU work about 41%."
+}

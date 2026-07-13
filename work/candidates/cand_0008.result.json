@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0008",
+  "parent": "cand_0006",
+  "parent_hash": "working-tree cand_0006 based on 7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "TUNE",
+  "mechanism_class": "representation change / allocation removal",
+  "duplicate_check": "first day-6 candidate; preserves ragged inputs with Cow rather than specializing away padding",
+  "hypothesis": "Borrowing the five equal-width input rows removes five allocations and 18.8 KB of copying, reducing day 6 by at least 10%.",
+  "artifact_paths": ["src/day06.rs"],
+  "raw_log_paths": [],
+  "commands": {"apply_or_build": "cargo test --release", "correctness": "day06 examples and exact answers", "authoritative_metric": "saved cand_0006 binary A/B and built-in benchmark", "regression_or_adversarial": "full tests; Cow fallback preserves ragged padding", "fresh_verifier": "saved-parent differential"},
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "nanoseconds", "direction": "lower", "raw_result_path": null},
+  "target_lane_metric": {"parent_user_cpu_ms_for_3000": 456.0, "candidate_user_cpu_ms_for_3000": 409.6, "user_cpu_improvement_percent": 10.2, "wall_speedup": 1.19},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "keep_lane_global_pending", "regression_or_adversarial": "pass", "fresh_verifier": "pass", "promote": "keep_variant"},
+  "verifier": {"mode": "saved-parent-binary differential", "verdict": "PASS", "evidence": "26 tests, exact answers, 10-run differential.", "limitations": ["Clean global total pending."]},
+  "decision": "KEEP VARIANT",
+  "learning": "Cow borrowing removes equal-width row copies and cuts day-6 CPU work 10.2% while preserving ragged-input padding."
+}

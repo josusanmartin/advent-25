@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0012",
+  "parent": "cand_0011",
+  "parent_hash": "working-tree cand_0011 based on 7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "EXPLORE",
+  "mechanism_class": "representation/layout change",
+  "duplicate_check": "first day-8 candidate; preserves Prim and bounded heap while changing state locality",
+  "hypothesis": "Dense 24-byte frontier records eliminate indirect point/min/parent gathers in both O(n^2) loops and reduce day 8 by at least 15%.",
+  "artifact_paths": ["src/day08.rs"],
+  "raw_log_paths": [],
+  "commands": {"apply_or_build": "cargo test --release", "correctness": "day08 examples and exact answers", "authoritative_metric": "saved cand_0011 binary A/B and built-in benchmark", "regression_or_adversarial": "full release tests", "fresh_verifier": "saved-parent differential"},
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "nanoseconds", "direction": "lower", "raw_result_path": null},
+  "target_lane_metric": {"parent_user_cpu_s_for_300": 1.157, "candidate_user_cpu_s_for_300": 0.849, "user_cpu_improvement_percent": 26.6, "wall_speedup": 1.27},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "keep_lane_global_pending", "regression_or_adversarial": "pass", "fresh_verifier": "pass", "promote": "keep_variant"},
+  "verifier": {"mode": "saved-parent-binary differential", "verdict": "PASS", "evidence": "26 tests, exact answers, 10-run differential.", "limitations": ["Clean global score pending."]},
+  "decision": "KEEP VARIANT",
+  "learning": "Dense compact Prim state eliminates indirect gathers and cuts day-8 CPU work 26.6%."
+}

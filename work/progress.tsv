@@ -1,0 +1,25 @@
+timestamp	candidate	score	decision	tokens_total	tokens_delta	wall_seconds	label
+2026-07-10T08:10:04Z	cand_0000	5090000	baseline				7-run median baseline; per-day guardrails captured
+2026-07-10T08:26:34Z	cand_0001	4870000	promote				day 1 fused both-parts scan; 35us to 16us
+2026-07-10T08:29:04Z	cand_0002	4840000	promote				day 3 removed second monotonic stack; 124us to 114us
+2026-07-10T08:32:20Z	cand_0003		discard				day 5 streamed IDs; differential screen tied/regressed
+2026-07-10T08:37:30Z	cand_0004		keep				day 11 compact parser; 2.41x saved-binary speedup; global run contaminated
+2026-07-10T08:39:35Z	cand_0005		keep				day 11 fused categorized path DP; ~16% user-CPU reduction; global load noisy
+2026-07-10T08:43:01Z	cand_0006		keep				day 12 stream regions; 41% user-CPU reduction; wall load noisy
+2026-07-10T08:46:19Z	cand_0007		discard				day 9 pair-loop fusion; user CPU flat, wall regressed
+2026-07-10T08:48:59Z	cand_0008		keep				day 6 borrow equal-width rows; 10.2% user-CPU reduction
+2026-07-10T08:51:14Z	cand_0009		discard				day 7 fixed-stride route; 36% regression
+2026-07-10T08:55:09Z	cand_0010		keep				day 4 padded grid; 12.5% user-CPU reduction
+2026-07-10T08:58:53Z	cand_0011		keep				day 2 even-repeat invariant; 26% user-CPU reduction; exhaustive verifier pass
+2026-07-10T09:02:02Z	cand_0012		keep				day 8 dense Prim frontier; 26.6% user-CPU reduction
+2026-07-10T09:05:22Z	cand_0013		discard				day 9 interval-delta prefix; CPU and wall regressed
+2026-07-10T09:13:18Z	cand_0014		keep				day 10 proven lower-bound exit; 1.25x multithreaded wall speedup
+2026-07-10T09:16:18Z	cand_0015		keep				day 5 in-place range merge; 8.1% user-CPU reduction
+2026-07-10T09:18:26Z	cand_0016		keep				day 7 sparse active frontier; 20.1% user-CPU reduction
+2026-07-10T09:24:56Z	cand_0017		keep				day 9 flat green grid; 15.5% user-CPU reduction
+2026-07-10T10:57:13Z	cand_0018		keep				Day 8 MST/top-k split; component signal, clean parallel wall pending
+2026-07-10T11:12:14Z	cand_0019		keep				Day 10 monotone first-feasible search; safe but CPU tie
+2026-07-10T11:15:18Z	cand_0020		keep				Day 10 exact feasible interval; 4.7-5.0x CPU lane win
+2026-07-10T11:18:39Z	cand_0021		discard				Day 8 16-chunk top-k; CPU and wall regression
+2026-07-10T11:20:17Z	cand_0022		discard				Day 8 four-chunk top-k; family closed
+2026-07-13T08:55:22Z	cand_0023	805000	promote				Day 8 shared exact threshold; verified 0.805ms parallel median

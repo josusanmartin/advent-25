@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0010",
+  "parent": "cand_0008",
+  "parent_hash": "working-tree cand_0008 based on 7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "EXPLORE",
+  "mechanism_class": "representation change / branch deletion",
+  "duplicate_check": "first day-4 candidate; replaces boundary logic rather than tuning queue behavior",
+  "hypothesis": "A zero-padded grid turns all eight-neighbor operations into fixed offsets, removing boundary branches and index division and reducing day 4 by at least 20%.",
+  "artifact_paths": ["src/day04.rs"],
+  "raw_log_paths": [],
+  "commands": {"apply_or_build": "cargo test --release", "correctness": "day04 examples and exact answers", "authoritative_metric": "saved cand_0008 binary A/B", "regression_or_adversarial": "full release tests", "fresh_verifier": "saved-parent differential"},
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "nanoseconds", "direction": "lower", "raw_result_path": null},
+  "target_lane_metric": {"parent_user_cpu_s_for_2000": 1.110, "candidate_user_cpu_s_for_2000": 0.971, "user_cpu_improvement_percent": 12.5, "wall_speedup": 1.29},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "keep_lane_global_pending", "regression_or_adversarial": "pass", "fresh_verifier": "pass", "promote": "keep_variant"},
+  "verifier": {"mode": "saved-parent-binary differential", "verdict": "PASS", "evidence": "26 tests, exact answers, 10-run differential.", "limitations": ["Clean global score pending."]},
+  "decision": "KEEP VARIANT",
+  "learning": "A padded border removes hot boundary branches/division and cuts day-4 user CPU 12.5%."
+}

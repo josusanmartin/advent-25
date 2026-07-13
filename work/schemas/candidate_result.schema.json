@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "artifact_paths": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "authoritative_metric": {
+      "type": "object"
+    },
+    "breakthrough": {
+      "type": "object"
+    },
+    "candidate": {
+      "type": "string"
+    },
+    "commands": {
+      "type": "object"
+    },
+    "correctness": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "created_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "decision": {
+      "type": "string"
+    },
+    "duplicate_check": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "escape": {
+      "type": "object"
+    },
+    "hypothesis": {
+      "type": "string"
+    },
+    "learning": {
+      "type": "string"
+    },
+    "mechanism_class": {
+      "type": "string"
+    },
+    "mode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "parent": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "parent_hash": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "phase_owners": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "promotion_ladder": {
+      "type": "object"
+    },
+    "raw_log_paths": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "schema_version": {
+      "type": "integer"
+    },
+    "screening": {
+      "type": "object"
+    },
+    "updated_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "validation_island": {
+      "type": "object"
+    },
+    "verifier": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "candidate",
+    "parent",
+    "hypothesis",
+    "mechanism_class",
+    "commands",
+    "promotion_ladder",
+    "verifier",
+    "decision"
+  ],
+  "title": "Problem-Agnostic Optimization Candidate Result",
+  "type": "object"
+}

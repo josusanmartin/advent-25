@@ -1,0 +1,193 @@
+{
+  "active_branches": [],
+  "audit": {
+    "enabled": true,
+    "last_audited_at": null,
+    "last_verdict": null,
+    "report": "work/audit.md",
+    "write_surface": [
+      "work/audit.md"
+    ]
+  },
+  "best_benchmark_candidate": "cand_0023",
+  "best_benchmark_score": 805000,
+  "best_stable_candidate": "cand_0023",
+  "best_stable_score": 805000,
+  "breakthrough_mining": {
+    "calibrated_screens": [],
+    "current_active_floor": null,
+    "enabled": true,
+    "frontier_sources": [],
+    "last_mined_at": null,
+    "path": "work/breakthroughs.md"
+  },
+  "candidate_artifacts": {
+    "directory": "work/candidates",
+    "required_for_promotions": true,
+    "schema": "work/schemas/candidate_result.schema.json"
+  },
+  "checkpoint": {
+    "completed_phases": [
+      "contract",
+      "baseline"
+    ],
+    "completed_shards": [],
+    "current_phase": "handoff",
+    "path": "work/checkpoints/progress.json",
+    "resume_policy": "skip_completed_terminal_phases_only"
+  },
+  "editable_files": [
+    "src/day01.rs",
+    "src/day02.rs",
+    "src/day03.rs",
+    "src/day04.rs",
+    "src/day05.rs",
+    "src/day06.rs",
+    "src/day07.rs",
+    "src/day08.rs",
+    "src/day09.rs",
+    "src/day10.rs",
+    "src/day11.rs",
+    "src/day12.rs",
+    "src/lib.rs",
+    "README.md",
+    "Cargo.toml (release settings only; separate candidate)"
+  ],
+  "escape": {
+    "active_burst": [],
+    "anti_revisit_rules": [],
+    "aspiration_rule": null,
+    "basin_memory": [],
+    "closed_hills": [],
+    "commitment_budget": null,
+    "committed_hill": null,
+    "controlled_regression_allowed": false,
+    "divergence_budget": null,
+    "diversity_map": [],
+    "kill_criterion": null,
+    "operator_credit": {},
+    "status": "tracking",
+    "stuck_signal": null
+  },
+  "execution_boundary": {
+    "draft_patch_only": false,
+    "notes": [],
+    "untrusted_code_sandbox": "clean_env_no_credentials_restricted_egress_when_possible"
+  },
+  "exhausted_branches": [],
+  "fixed_budget": "Continue through structural Day 8 and Day 10 critical-path changes and measured build/scheduler tuning; stop at verified sub-1ms or exhausted correctness-safe branches",
+  "immutable_files": [
+    "inputs/*.txt",
+    "src/bin/benchmark.rs",
+    "existing tests and expected values",
+    "output/answers.txt reference contents",
+    "work harness schemas/scripts"
+  ],
+  "isolation": {
+    "allowed_prior_sources": [],
+    "fresh_run": true
+  },
+  "iterations": 24,
+  "last_updated": "2026-07-13T08:55:22Z",
+  "mode": "local deterministic parallel-latency optimization",
+  "multi_agent": {
+    "active_workers": [],
+    "completed_workers": [],
+    "coordinator_workspace": "canonical",
+    "enabled": false,
+    "mode": "off",
+    "promotion_policy": "coordinator_only_authoritative_gate",
+    "worker_isolation": "worktree_or_copied_sandbox"
+  },
+  "next_candidate_id": 24,
+  "objective_source": "explicit user request for sub-1ms parallel wall time (2026-07-10)",
+  "pending_jobs": [],
+  "profiling": {
+    "artifact_paths": [
+      "work/raw_logs/",
+      "work/profiles/"
+    ],
+    "available_surfaces": [
+      "built-in per-day timing",
+      "differential repeated measurements",
+      "release assembly",
+      "day 2 pprof hook"
+    ],
+    "commands": {
+      "authoritative": "cargo run --release --bin benchmark",
+      "correctness": "cargo test --release",
+      "day2_profile": "PPROF=1 PPROF_LOOPS=1000 cargo run --profile profiling -- 2"
+    },
+    "confidence": "authoritative timings are target-local but microsecond formatting limits resolution for fast days",
+    "fallback_evidence": [
+      "static allocation/work counts",
+      "controlled ablations",
+      "generated assembly"
+    ],
+    "strength": "medium",
+    "unavailable_surfaces": [
+      "Linux perf counters on macOS"
+    ]
+  },
+  "progress": {
+    "chart": "work/progress.svg",
+    "chart_enabled": true,
+    "dashboard": "work/dashboard.html",
+    "events": "work/events.jsonl",
+    "latest_usage_snapshot": {
+      "cache_creation_input_tokens": null,
+      "cache_read_input_tokens": null,
+      "cached_input_tokens": null,
+      "input_tokens": null,
+      "output_tokens": null,
+      "reasoning_output_tokens": null,
+      "recorded_at": "2026-07-10T09:33:49Z",
+      "source": "get_goal",
+      "total_tokens": null,
+      "wall_seconds": null
+    },
+    "logging_enabled": true,
+    "review": "work/review.md",
+    "table": "work/progress.tsv",
+    "token_budget": null,
+    "tokens_since_promotion": 0,
+    "tokens_total": 0,
+    "usage_gap": "get_goal returned no active goal; token fields unavailable",
+    "usage_source": "explicit get_goal snapshots in work/log.md",
+    "x_axis": "candidate"
+  },
+  "promotion_ladder": {
+    "advisory_steps": [
+      "profile",
+      "style",
+      "local_screening"
+    ],
+    "definition": "work/promotion_ladder.md",
+    "enabled": true,
+    "gating_steps": [
+      "apply_or_build",
+      "correctness",
+      "authoritative_metric",
+      "regression_or_adversarial",
+      "fresh_verifier",
+      "promote"
+    ]
+  },
+  "rate_limits": {},
+  "round": 19,
+  "scenario_sets": {},
+  "schema_version": 2,
+  "score_unit": "parallel_wall_median_ns (lower is better; sequential and per-day medians are guardrails)",
+  "seed_protocol": {},
+  "stagnation_count": 0,
+  "statistical_gate": null,
+  "target_score": 1000000,
+  "theoretical_floor": null,
+  "verifier": {
+    "definition": "work/verifier.md",
+    "enabled": true,
+    "last_verdict": "PASS",
+    "last_verified_candidate": "cand_0023",
+    "mode": "fresh_environment_when_possible"
+  }
+}

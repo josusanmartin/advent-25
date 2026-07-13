@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0017",
+  "parent": "cand_0016",
+  "parent_hash": "working-tree cand_0016 based on 7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "TUNE",
+  "mechanism_class": "profile-guided layout change",
+  "duplicate_check": "new premise after cand_0013: preserves byte-grid prefix algorithm and only flattens its storage",
+  "hypothesis": "Flattening the profiled-hot green grid removes 494 row allocations and inner row-pointer loads, reducing day 9 by at least 5%.",
+  "artifact_paths": ["src/day09.rs"],
+  "raw_log_paths": ["work/profiles/day9_cand0016.json.gz"],
+  "commands": {"apply_or_build": "cargo test --release", "correctness": "day09 tests and exact answers", "authoritative_metric": "saved cand_0016 binary A/B", "regression_or_adversarial": "full release tests", "fresh_verifier": "saved-parent differential"},
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "nanoseconds", "direction": "lower", "raw_result_path": null},
+  "target_lane_metric": {"parent_user_cpu_s_for_500": 1.175, "candidate_user_cpu_s_for_500": 0.993, "user_cpu_improvement_percent": 15.5, "wall_speedup_under_load": 2.35},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "keep_lane_global_pending", "regression_or_adversarial": "pass", "fresh_verifier": "pass_with_load_limitation", "promote": "keep_variant"},
+  "verifier": {"mode": "saved-parent-binary differential", "verdict": "PASS", "evidence": "26 tests, exact answers, 12-run differential.", "limitations": ["System load exceeded 60; CPU-work improvement is the stable signal pending clean global wall time."]},
+  "decision": "KEEP VARIANT",
+  "learning": "Profile-guided flattening preserves the fast byte-grid algorithm while removing row allocations/indirection, cutting day-9 CPU 15.5%."
+}

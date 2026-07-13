@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0003",
+  "parent": "cand_0002",
+  "parent_hash": "working-tree cand_0002 based on 7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "TUNE",
+  "mechanism_class": "work deletion / allocation removal",
+  "duplicate_check": "first day-5 candidate; streams IDs instead of changing range lookup",
+  "hypothesis": "Merging the range prefix before scanning IDs removes the 1,000-element ID allocation and second traversal, reducing day 5 by at least 10%.",
+  "artifact_paths": ["src/day05.rs"],
+  "raw_log_paths": [],
+  "commands": {"apply_or_build": "cargo test --release", "correctness": "full tests and exact day-5 answers", "authoritative_metric": "repeated built-in benchmark", "regression_or_adversarial": "day05 examples", "fresh_verifier": "saved cand_0002 binary A/B"},
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "nanoseconds", "direction": "lower", "raw_result_path": null},
+  "screening_metric": {"parent_mean_ms_for_10000": 802.0, "candidate_mean_ms_for_10000": 808.8, "parent_stddev_ms": 33.8, "candidate_stddev_ms": 49.6},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "not_run_screen_regressed", "regression_or_adversarial": "pass", "fresh_verifier": "not_run", "promote": "fail"},
+  "verifier": {"mode": "saved-parent-binary differential", "verdict": "SKIPPED_WITH_LIMITATION", "evidence": "Candidate failed the differential screen.", "limitations": ["System-load variance was high, but there was no positive signal."]},
+  "decision": "REJECT",
+  "learning": "Removing the ID vector did not reduce runtime; parsing and range lookups dominate this formulation, so do not retry allocation-only variants."
+}

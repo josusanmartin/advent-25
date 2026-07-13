@@ -1,0 +1,50 @@
+^D13:17  up 5 days,  3:37, 6 users, load averages: 189.05 135.68 93.26
+day8-p1 pair 1 parent
+real 0.60
+user 0.28
+sys 0.04
+day8-p1 pair 1 candidate
+real 2.99
+user 0.55
+sys 0.07
+day8-p1 pair 2 parent
+real 0.37
+user 0.19
+sys 0.02
+day8-p1 pair 2 candidate
+real 2.16
+user 0.54
+sys 0.07
+day8-p1 pair 3 parent
+real 0.52
+user 0.19
+sys 0.02
+day8-p1 pair 3 candidate
+real 2.64
+user 0.55
+sys 0.07
+day8 pair 1 parent
+real 2.39
+user 0.34
+sys 0.05
+day8 pair 1 candidate
+real 3.04
+user 0.70
+sys 0.08
+day8 pair 2 parent
+real 2.10
+user 0.38
+sys 0.06
+day8 pair 2 candidate
+real 4.60
+user 0.71
+sys 0.08
+day8 pair 3 parent
+real 2.15
+user 0.34
+sys 0.06
+day8 pair 3 candidate
+real 3.85
+user 0.70
+sys 0.08
+13:18  up 5 days,  3:37, 6 users, load averages: 201.63 143.61 97.58

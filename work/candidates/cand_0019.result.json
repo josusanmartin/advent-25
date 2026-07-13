@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0019",
+  "parent": "cand_0018",
+  "parent_hash": "e93a75fc8c75a6059da718357976bebc70295ac511b30d0ca8e79bece25e3fda",
+  "mode": "EXPLORE",
+  "mechanism_class": "algebraic work deletion",
+  "duplicate_check": "First exact objective-monotonicity candidate for Day 10; cand_0014 only added a global lower-bound early exit.",
+  "hypothesis": "Because total presses are affine in each free variable, searching the innermost variable from its exact improving endpoint and stopping at the first feasible value deletes dominated evaluations.",
+  "artifact_paths": ["src/day10.rs"],
+  "raw_log_paths": ["work/raw_logs/cand_0019_screen.txt"],
+  "commands": {
+    "apply_or_build": "cargo test --release",
+    "correctness": "cargo test --release including 128 generated brute-force comparisons",
+    "authoritative_metric": "cargo run --release --bin benchmark (clean host required)",
+    "regression_or_adversarial": "Day 10 examples plus generated feasible integer systems",
+    "fresh_verifier": "saved cand_0018 hot-benchmark binary versus cand_0019"
+  },
+  "correctness": "pass",
+  "authoritative_metric": {
+    "score": null,
+    "unit": "parallel wall nanoseconds",
+    "direction": "lower",
+    "raw_result_path": null
+  },
+  "target_lane_metric": {
+    "one_thread_parent_user_median_s_for_200": 1.07,
+    "one_thread_candidate_user_median_s_for_200": 1.07,
+    "twelve_thread_parent_user_median_s_for_200": 1.14,
+    "twelve_thread_candidate_user_median_s_for_200": 1.12,
+    "host_load_range": "21.97-78.46"
+  },
+  "promotion_ladder": {
+    "apply_or_build": "pass",
+    "correctness": "pass",
+    "authoritative_metric": "no_signal",
+    "regression_or_adversarial": "pass",
+    "fresh_verifier": "pass_with_load_limitation",
+    "promote": "fail"
+  },
+  "verifier": {
+    "mode": "saved-parent differential",
+    "verdict": "INCONCLUSIVE",
+    "evidence": "One-thread user CPU tied and the 12-thread delta was within noise.",
+    "limitations": ["Host load was severe, but accumulated user CPU also showed no meaningful work reduction."]
+  },
+  "decision": "KEEP VARIANT",
+  "learning": "The monotone stop is safe but most expensive outer assignments have no feasible innermost value, so infeasible scans remain; keep only as a stepping stone for exact feasible-interval pruning."
+}

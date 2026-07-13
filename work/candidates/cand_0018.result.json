@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0018",
+  "parent": "cand_0017",
+  "parent_hash": "57948ac8bf73cab98cf6d91de17a79c91c27bbb167d97292f8ab27dc25a62d52",
+  "mode": "EXPLORE",
+  "mechanism_class": "resource transfer / tail reshaping",
+  "duplicate_check": "First latency-oriented Day 8 split; cand_0012 only changed the fused Prim frontier representation.",
+  "hypothesis": "Running exact MST-last-edge and exact top-1000-edge selection as two Rayon branches removes heap work from Prim's serial dependency chain and lowers Day 8 parallel latency enough to move the whole-suite tail.",
+  "artifact_paths": ["src/day08.rs"],
+  "raw_log_paths": ["work/raw_logs/cand_0018_screen.txt"],
+  "commands": {
+    "apply_or_build": "cargo test --release",
+    "correctness": "cargo test --release",
+    "authoritative_metric": "RAYON_NUM_THREADS=12 cargo run --release --bin benchmark (clean host required)",
+    "regression_or_adversarial": "Day 8 example top-10, full-connect, and puzzle-input tests",
+    "fresh_verifier": "saved cand_0017 hot-benchmark binary versus freshly linked cand_0018 binary"
+  },
+  "correctness": "pass",
+  "authoritative_metric": {
+    "score": null,
+    "unit": "parallel wall nanoseconds",
+    "direction": "lower",
+    "raw_result_path": null
+  },
+  "target_lane_metric": {
+    "part1_parent_user_s_for_500": 1.35,
+    "part1_candidate_user_s_for_500": 0.89,
+    "part2_parent_user_s_for_500": 1.31,
+    "part2_candidate_user_s_for_500": 0.71,
+    "matched_parent_wall_median_s_for_300": 1.25,
+    "matched_candidate_wall_median_s_for_300": 1.12,
+    "candidate_total_user_cpu_regression_percent": 18.0,
+    "host_load_range": "14.79-15.56"
+  },
+  "promotion_ladder": {
+    "apply_or_build": "pass",
+    "correctness": "pass",
+    "authoritative_metric": "pending_clean_host",
+    "regression_or_adversarial": "pass",
+    "fresh_verifier": "pass_with_load_limitation",
+    "promote": "pending"
+  },
+  "verifier": {
+    "mode": "saved-parent differential",
+    "verdict": "INCONCLUSIVE",
+    "evidence": "Each independent branch uses materially less CPU than the parent's fused solve; matched wall median favored the candidate under load, but samples were scheduler-contaminated.",
+    "limitations": ["Host load remained about 15 and candidate intentionally spends more total CPU to shorten the critical path."]
+  },
+  "decision": "KEEP VARIANT",
+  "learning": "The fused Day 8 loop is a real latency/CPU trade: MST-only and top-k-only are each much cheaper than the fused solve, so a two-branch route is plausible, but clean whole-suite timing is required."
+}

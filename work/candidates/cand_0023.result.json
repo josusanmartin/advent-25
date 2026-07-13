@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0023",
+  "created_at": "2026-07-13T08:55:22Z",
+  "parent": "cand_0020 with cand_0018 Day 8 restored",
+  "parent_hash": "679533c7466c384362d3defbc9e958aa78bb484dd474578cbc6ff756ef0df16f",
+  "mode": "EXPLORE",
+  "mechanism_class": "work deletion / exact selection primitive",
+  "duplicate_check": "This is the predeclared shared-threshold route, not a retune of the rejected local-heap parallel candidates cand_0021/cand_0022.",
+  "hypothesis": "An exact top-k bound learned from 64 prefix rows can replace most Day 8 heap maintenance with threshold checks and one in-place selection, reducing the critical Day 8 branch enough to make sub-1ms robust.",
+  "artifact_paths": ["src/day08.rs", "README.md"],
+  "raw_log_paths": [
+    "work/raw_logs/cand_0023_screen.txt",
+    "work/raw_logs/cand_0023_official_01.txt",
+    "work/raw_logs/cand_0023_official_02.txt",
+    "work/raw_logs/cand_0023_official_03.txt",
+    "work/raw_logs/cand_0023_official_04.txt",
+    "work/raw_logs/cand_0023_official_05.txt",
+    "work/raw_logs/cand_0023_official_06.txt",
+    "work/raw_logs/cand_0023_official_07.txt"
+  ],
+  "commands": {
+    "apply_or_build": "cargo build --release --bin benchmark",
+    "correctness": "cargo test --release; cargo fmt --check; exact output/answers.txt SHA-256 comparison",
+    "authoritative_metric": "seven independent cargo run --release --bin benchmark processes",
+    "regression_or_adversarial": "deterministic generated graphs compared against collect-all exact sorting over n=2..80 and six limits",
+    "fresh_verifier": "saved cand_0020 hot-benchmark binary versus cand_0023, then seven independent official processes"
+  },
+  "correctness": "pass: 28 release tests, generated exact-selection oracle, formatting, and unchanged answer-file hash eed3f681c172a8b5f98f21b1058afd38375209b80ea6f174df1e80506b7fa0cb",
+  "authoritative_metric": {
+    "score": 805000,
+    "unit": "parallel wall nanoseconds",
+    "direction": "lower",
+    "run_medians_ns": [800000, 805000, 813000, 996000, 803000, 805000, 796000],
+    "sequential_median_ns": 2340000,
+    "parent_parallel_median_ns": 941000,
+    "parent_sequential_median_ns": 2710000,
+    "raw_result_path": "work/raw_logs/cand_0023_official_*.txt"
+  },
+  "target_lane_metric": {
+    "part1_parent_user_median_s_for_500": 0.35,
+    "part1_candidate_user_median_s_for_500": 0.27,
+    "part1_cpu_reduction_percent": 22.9,
+    "both_parent_wall_median_s_for_300": 0.23,
+    "both_candidate_wall_median_s_for_300": 0.20,
+    "both_wall_reduction_percent": 13.0
+  },
+  "promotion_ladder": {
+    "apply_or_build": "pass",
+    "correctness": "pass",
+    "authoritative_metric": "pass: 805000 < 1000000",
+    "regression_or_adversarial": "pass",
+    "fresh_verifier": "pass",
+    "promote": "pass"
+  },
+  "verifier": {
+    "mode": "saved-parent differential, generated brute-force oracle, and independent-process official verification",
+    "verdict": "PASS",
+    "evidence": "All seven official parallel medians were below 1 ms (796-996 us), their median was 805 us, the sequential median was 2.34 ms, all 28 tests passed, and exact answers were unchanged.",
+    "limitations": ["Target-local microbenchmark results remain hardware and host-load dependent."]
+  },
+  "decision": "PROMOTE",
+  "learning": "A strong shared exact threshold plus one selection primitive deletes enough heap work to shorten Day 8's critical branch; the full suite now has a verified 19.5% margin below 1 ms."
+}

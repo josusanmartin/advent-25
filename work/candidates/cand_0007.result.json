@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0007",
+  "parent": "cand_0006",
+  "parent_hash": "working-tree cand_0006 based on 7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "TUNE",
+  "mechanism_class": "work deletion / loop fusion",
+  "duplicate_check": "first day-9 candidate; fuses pair scans without changing coverage representation",
+  "hypothesis": "Updating the unconstrained maximum inside part 2's mandatory pair scan removes one 122,760-pair traversal and reduces day 9 by at least 5%.",
+  "artifact_paths": ["src/day09.rs"],
+  "raw_log_paths": [],
+  "commands": {"apply_or_build": "cargo test --release", "correctness": "day09 tests and exact puzzle answers", "authoritative_metric": "saved cand_0006 binary A/B and built-in benchmark", "regression_or_adversarial": "full release tests", "fresh_verifier": "saved-parent differential"},
+  "correctness": "pass",
+  "authoritative_metric": {"score": null, "unit": "nanoseconds", "direction": "lower", "raw_result_path": null},
+  "screening_metric": {"parent_user_cpu_s_for_500": 1.044, "candidate_user_cpu_s_for_500": 1.050, "parent_wall_mean_s": 1.865, "candidate_wall_mean_s": 2.386},
+  "promotion_ladder": {"apply_or_build": "pass", "correctness": "pass", "authoritative_metric": "not_run_screen_regressed", "regression_or_adversarial": "pass", "fresh_verifier": "not_run", "promote": "fail"},
+  "verifier": {"mode": "saved-parent-binary differential", "verdict": "SKIPPED_WITH_LIMITATION", "evidence": "No CPU-work signal and worse wall-time screen.", "limitations": ["Shared load raised variance but user CPU was also flat."]},
+  "decision": "REJECT",
+  "learning": "Adding the unconstrained-max dependency to the part-2 hot loop offsets deletion of the separate vectorizable pair scan."
+}

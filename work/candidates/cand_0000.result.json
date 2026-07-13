@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "candidate": "cand_0000",
+  "parent": null,
+  "parent_hash": "7d644f21bf8948a844b39b030cb6dc7ad39bd525",
+  "mode": "SEED",
+  "mechanism_class": "baseline",
+  "duplicate_check": "first measured artifact in this fresh run",
+  "hypothesis": "The checked-in release build reproduces the README solver-time regime and establishes stable per-day guardrails.",
+  "artifact_paths": ["src/day01.rs", "src/day02.rs", "src/day03.rs", "src/day04.rs", "src/day05.rs", "src/day06.rs", "src/day07.rs", "src/day08.rs", "src/day09.rs", "src/day10.rs", "src/day11.rs", "src/day12.rs"],
+  "raw_log_paths": ["work/raw_logs/baseline_1.txt", "work/raw_logs/baseline_2.txt", "work/raw_logs/baseline_3.txt", "work/raw_logs/baseline_4.txt", "work/raw_logs/baseline_5.txt", "work/raw_logs/baseline_6.txt", "work/raw_logs/baseline_7.txt"],
+  "commands": {
+    "apply_or_build": "cargo test --release",
+    "correctness": "cargo test --release and output/answers.txt reference capture",
+    "authoritative_metric": "cargo run --release --bin benchmark (7 independent runs, 100 iterations each)",
+    "regression_or_adversarial": "26 release tests",
+    "fresh_verifier": "not applicable to seed baseline"
+  },
+  "correctness": "pass",
+  "authoritative_metric": {
+    "score": 5090000,
+    "unit": "nanoseconds (median of seven reported per-day-total medians)",
+    "direction": "lower",
+    "raw_result_path": "work/raw_logs/baseline_*.txt"
+  },
+  "per_day_median_of_run_medians_us": {
+    "1": 35,
+    "2": 11,
+    "3": 131,
+    "4": 302,
+    "5": 31,
+    "6": 87,
+    "7": 39,
+    "8": 1770,
+    "9": 836,
+    "10": 1500,
+    "11": 170,
+    "12": 191
+  },
+  "parallel_median_of_run_medians_us": 1910,
+  "promotion_ladder": {
+    "apply_or_build": "pass",
+    "correctness": "pass",
+    "authoritative_metric": "baseline",
+    "regression_or_adversarial": "pass",
+    "fresh_verifier": "not_applicable",
+    "promote": "baseline"
+  },
+  "verifier": {
+    "mode": "same-workspace repeated baseline",
+    "verdict": "PASS",
+    "evidence": "Seven independent benchmark processes and all release tests passed.",
+    "limitations": ["Built-in formatter reports whole microseconds below 1 ms and two decimals above 1 ms."]
+  },
+  "decision": "PROMOTE",
+  "learning": "Days 8, 10, and 9 account for about 81% of the sequential total; run-to-run total medians span 5.07-5.28 ms."
+}
